@@ -85,7 +85,7 @@
 
   /* Weather option styling */
   .weather-option input:checked + label {
-    @apply border-primary bg-primary-50;
+    @apply border-primary bg-opacity-5 bg-primary;
   }
 }
 
