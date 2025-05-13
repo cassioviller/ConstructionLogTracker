@@ -1,10 +1,14 @@
 import { Rdo, Project, WorkforceItem, EquipmentItem, ActivityItem, OccurrenceItem, CommentItem, PhotoItem } from "@shared/schema";
 import PDFDocument from 'pdfkit';
+import { storage } from './storage';
 
 // Função para gerar um PDF profissional para o RDO
 export async function generatePdfRdo(rdo: Rdo, project: Project): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
+      // Buscar as fotos relacionadas ao RDO
+      const photos = await storage.getPhotosByRdoId(rdo.id);
+      
       // Criação do documento PDF com configurações para Português do Brasil
       const doc = new PDFDocument({
         size: 'A4',
@@ -435,15 +439,17 @@ export async function generatePdfRdo(rdo: Rdo, project: Project): Promise<Buffer
       // ======================
       // REGISTRO FOTOGRÁFICO
       // ======================
-      if (Array.isArray(rdo.photos) && rdo.photos.length > 0) {
+      if (Array.isArray(photos) && photos.length > 0) {
         addSectionTitle(doc, 'REGISTRO FOTOGRÁFICO');
         
         // Como não podemos carregar imagens externas aqui, vamos apenas listar os nomes/URLs das fotos
         doc.font('Helvetica').fontSize(10);
         doc.text('FOTOS DISPONÍVEIS NO SISTEMA:', { underline: true });
         
-        (rdo.photos as PhotoItem[]).forEach((photo, index) => {
-          doc.text(`Foto ${index + 1}: ${photo.caption || 'Sem legenda'}`);
+        photos.forEach((photo, index) => {
+          const caption = photo.caption || 'Sem legenda';
+          const userName = photo.userName ? ` (por ${photo.userName})` : '';
+          doc.text(`Foto ${index + 1}: ${caption}${userName}`);
         });
         
         doc.moveDown(1);
