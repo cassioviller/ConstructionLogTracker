@@ -4,12 +4,17 @@ import {
   rdos, Rdo, InsertRdo,
   photos, Photo, InsertPhoto,
   projectTeam,
-  teamMembers, TeamMember, InsertTeamMember
+  teamMembers, TeamMember, InsertTeamMember,
+  sessions
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db } from "./db";
+import { eq, desc, asc, sql, and, like, or, isNotNull, count } from 'drizzle-orm';
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 // Define interfaces for pagination and filtering
 interface PaginationOptions {
@@ -257,9 +262,20 @@ export class MemStorage implements IStorage {
     
     // Paginate results
     const startIndex = (page - 1) * limit;
-    const paginatedRdos = rdos.slice(startIndex, startIndex + limit);
     
-    console.log(`Após paginação: ${paginatedRdos.length} RDOs sendo retornados`);
+    // Verificação de segurança para garantir que startIndex seja válido
+    let paginatedRdos;
+    if (startIndex >= rdos.length && page > 1 && rdos.length > 0) {
+      console.log(`Erro na paginação: startIndex (${startIndex}) >= total de RDOs (${rdos.length})`);
+      // Se não houver RDOs suficientes para a página solicitada, retorne a primeira página
+      paginatedRdos = rdos.slice(0, limit);
+      console.log(`Recuperando primeira página como fallback: ${paginatedRdos.length} RDOs`);
+    } else {
+      paginatedRdos = rdos.slice(startIndex, startIndex + limit);
+    }
+    
+    console.log(`Após paginação: ${paginatedRdos.length} RDOs sendo retornados. Índices ${startIndex} a ${startIndex + limit}`);
+    console.log(`Informações dos RDOs paginados: ${paginatedRdos.map(rdo => `ID: ${rdo.id}, projectId: ${rdo.projectId}, number: ${rdo.number}`)}`);
     
     // Add responsible info to each RDO
     const itemsWithResponsible = paginatedRdos.map(rdo => {
