@@ -369,6 +369,20 @@ export class MemStorage implements IStorage {
     this.rdos.set(id, rdo);
     return rdo;
   }
+  
+  async updateRdo(id: number, data: Partial<Rdo>): Promise<Rdo | undefined> {
+    const rdo = this.rdos.get(id);
+    if (!rdo) return undefined;
+    
+    // Atualizar o RDO com os dados fornecidos
+    const updatedRdo = {
+      ...rdo,
+      ...data
+    };
+    
+    this.rdos.set(id, updatedRdo);
+    return updatedRdo;
+  }
 
   // Photo methods
   async getPhotos(options: PhotoFilterOptions): Promise<Photo[]> {

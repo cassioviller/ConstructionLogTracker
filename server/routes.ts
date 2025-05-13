@@ -136,6 +136,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao buscar RDO" });
     }
   });
+  
+  app.patch("/api/rdos/:id", requireAuth, async (req, res) => {
+    try {
+      const rdoId = parseInt(req.params.id);
+      const existingRdo = await storage.getRdo(rdoId);
+      
+      if (!existingRdo) {
+        return res.status(404).json({ message: "RDO não encontrado" });
+      }
+      
+      // Permitir atualização parcial do RDO
+      const updatedRdo = await storage.updateRdo(rdoId, req.body);
+      
+      res.json(updatedRdo);
+    } catch (error) {
+      console.error("Erro ao atualizar RDO:", error);
+      res.status(500).json({ message: "Erro ao atualizar relatório" });
+    }
+  });
 
   app.get("/api/rdos/:id/pdf", requireAuth, async (req, res) => {
     try {
