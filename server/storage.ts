@@ -41,6 +41,7 @@ export interface IStorage {
   getRdo(id: number): Promise<Rdo | undefined>;
   getNextRdoNumber(projectId: number): Promise<number>;
   createRdo(rdo: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo>;
+  updateRdo(id: number, data: Partial<Rdo>): Promise<Rdo | undefined>;
   
   // Photos
   getPhotos(options: PhotoFilterOptions): Promise<Photo[]>;

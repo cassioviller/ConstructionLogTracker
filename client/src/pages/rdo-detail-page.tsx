@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useState } from "react";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { 
@@ -21,16 +22,27 @@ import {
   CloudLightning,
   Users,
   Truck,
-  ClipboardCheck
+  ClipboardCheck,
+  CheckCircle
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { WorkforceSection } from "@/components/rdo/workforce-section";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function RdoDetailPage() {
   const { rdoId, id: projectId } = useParams();
   const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Estado para controlar a edição
+  const [showWorkforceEditor, setShowWorkforceEditor] = useState(false);
+  const [updatedFields, setUpdatedFields] = useState<any>({});
 
   // Fetch RDO details
   const { data: rdo, isLoading: isRdoLoading } = useQuery({
@@ -41,6 +53,49 @@ export default function RdoDetailPage() {
   const { data: project, isLoading: isProjectLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}`],
   });
+  
+  // Verificar se o usuário pode editar este RDO (implementação simples)
+  // No futuro, poderia verificar permissões mais específicas
+  const isEditable = !!user;
+  
+  // Mutation para atualizar o RDO
+  const updateRdoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", `/api/rdos/${rdoId}`, updatedFields);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/rdos/${rdoId}`] });
+      
+      toast({
+        title: "RDO atualizado com sucesso",
+        description: "As alterações foram salvas.",
+      });
+      
+      // Limpar campos atualizados após sucesso
+      setUpdatedFields({});
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar RDO",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Função para lidar com a atualização do RDO
+  const handleUpdateRdo = () => {
+    if (Object.keys(updatedFields).length === 0) {
+      toast({
+        title: "Nenhuma alteração detectada",
+        description: "Faça alguma alteração antes de salvar.",
+      });
+      return;
+    }
+    
+    updateRdoMutation.mutate();
+  };
 
   const isLoading = isRdoLoading || isProjectLoading;
 
@@ -282,11 +337,50 @@ export default function RdoDetailPage() {
         
         <TabsContent value="workforce">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Mão de Obra</CardTitle>
+              {isEditable && !showWorkforceEditor && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowWorkforceEditor(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Editar Mão de Obra
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
-              {Array.isArray(rdo.workforce) && rdo.workforce.length > 0 ? (
+              {showWorkforceEditor ? (
+                <div className="mb-4">
+                  <WorkforceSection 
+                    onChange={(workforce) => {
+                      setUpdatedFields(prev => ({...prev, workforce}));
+                    }}
+                    initialData={rdo.workforce || []}
+                    projectId={projectId}
+                  />
+                  <div className="flex justify-end mt-4 space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowWorkforceEditor(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        handleUpdateRdo();
+                        setShowWorkforceEditor(false);
+                      }}
+                      disabled={updateRdoMutation.isPending}
+                    >
+                      {updateRdoMutation.isPending ? 
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 
+                        <><CheckCircle className="mr-2 h-4 w-4" /> Salvar Alterações</>}
+                    </Button>
+                  </div>
+                </div>
+              ) : Array.isArray(rdo.workforce) && rdo.workforce.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -315,7 +409,21 @@ export default function RdoDetailPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-slate-500">
-                  Nenhum registro de mão de obra para este relatório
+                  {isEditable ? (
+                    <>
+                      <p className="mb-2">Nenhum registro de mão de obra para este relatório</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowWorkforceEditor(true)}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Adicionar Mão de Obra
+                      </Button>
+                    </>
+                  ) : (
+                    <p>Nenhum registro de mão de obra para este relatório</p>
+                  )}
                 </div>
               )}
             </CardContent>
