@@ -1,0 +1,33 @@
+Seção 1: Correção Crítica no Salvamento e Exibição de Fotos nos RDOs (Prioridade Máxima)
+Problema: As fotos enviadas durante a criação ou edição de um RDO não estão sendo salvas no banco de dados (PostgreSQL) e, consequentemente, não são exibidas ao visualizar o RDO ou no PDF exportado.
+Ação Requerida:
+Diagnóstico: Investigue o fluxo de upload e salvamento de fotos. Verifique se o backend está recebendo os arquivos, se há erros no processo de armazenamento (seja no sistema de arquivos do servidor ou como bytea no PostgreSQL, dependendo da abordagem escolhida anteriormente) e se os caminhos ou referências às fotos estão sendo corretamente salvos na tabela de RDOs ou em uma tabela associada de mídias.
+Implementar/Corrigir Salvamento:
+Garanta que o backend (Node.js/Express.js) consiga receber múltiplos arquivos de imagem (jpg, png, jpeg).
+Implemente a lógica para salvar essas imagens de forma persistente. Se estiver salvando no sistema de arquivos, crie uma estrutura de pastas organizada (ex: /uploads/projeto_id/rdo_id/nome_foto.ext) e salve o caminho no banco de dados. Se estiver usando bytea, garanta a correta conversão e armazenamento.
+Associe cada foto ao RDO correspondente no banco de dados, incluindo legendas se essa funcionalidade já foi iniciada.
+Implementar/Corrigir Exibição:
+Ao visualizar um RDO, as fotos associadas devem ser carregadas e exibidas corretamente na interface.
+As fotos também devem ser incluídas na exportação para PDF (conforme detalhado na Seção 3).
+Testes: Teste o upload de múltiplas fotos, com diferentes extensões, e verifique se são salvas e exibidas corretamente.
+Seção 2: Revisão e Correção da Listagem e Vínculo de Relatórios Diários de Obra (RDOs) (Prioridade Alta)
+Problema: Os RDOs criados aparecem na seção "Últimos Relatórios" do Dashboard, mas não estão sendo listados corretamente:
+Dentro da página de detalhes do projeto correspondente (seção "Histórico de Relatórios" continua vazia ou não exibe todos os RDOs do projeto).
+Na página geral de "Relatórios" (acessada pelo menu lateral, que também pode estar vazia ou incompleta).
+O acesso direto ao RDO (clicando em "Visualizar" no Dashboard) pode estar funcionando, mas a navegação via página do projeto ou lista geral de relatórios falha (resultando em 404 ou lista vazia).
+Ação Requerida:
+Verificar Vínculo Projeto-RDO: Confirme que, ao salvar um RDO, o id do projeto está sendo corretamente armazenado junto aos dados do RDO no PostgreSQL. Este vínculo é essencial.
+Corrigir Listagem na Página do Projeto:
+Revise a query SQL ou o método de busca no backend que alimenta a seção "Histórico de Relatórios" na página de detalhes de um projeto. Ela deve buscar todos os RDOs onde projeto_id corresponda ao ID do projeto visualizado.
+Garanta que o frontend renderize essa lista corretamente.
+Corrigir Listagem Geral de Relatórios:
+Revise a query e a lógica da página "Relatórios". Ela deve ser capaz de listar todos os RDOs de todos os projetos, idealmente com filtros (por projeto, data, etc.).
+Corrigir Rotas e Navegação: Verifique todas as rotas (frontend e backend) relacionadas à visualização de RDOs para eliminar os erros 404. Garanta que clicar em um RDO em qualquer lista leve à sua visualização correta.
+Seção 3: Revisão e Correção da Exportação/Impressão de PDF do RDO (Prioridade Média)
+Problema: A formatação do PDF gerado pelos botões "Baixar PDF" e "Imprimir" está inadequada, não seguindo um layout profissional e não incluindo todos os dados, especialmente as fotos.
+Ação Requerida:
+Revisar Template de PDF:
+Implemente um layout claro e profissional conforme especificado anteriormente (cabeçalho com logo/dados da empresa e obra, seções bem definidas para cada campo do RDO, tabelas para mão de obra e equipamentos, inclusão de fotos com legendas, rodapé).
+Inclusão de Fotos no PDF: Esta é uma parte crítica. As fotos salvas (conforme Seção 1) devem ser incorporadas ao PDF. Se as fotos estiverem no sistema de arquivos, a biblioteca de PDF precisará acessá-las. Se estiverem como bytea, precisarão ser decodificadas e embutidas.
+Biblioteca de PDF: Confirme se a biblioteca escolhida (ex: pdfmake, puppeteer) está sendo usada corretamente para aplicar o template e incluir todos os dados dinâmicos, incluindo as imagens.
+Consistência Impressão/PDF: A função "Imprimir" deve refletir o layout do PDF.
