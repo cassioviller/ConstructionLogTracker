@@ -3,7 +3,8 @@ import {
   projects, Project, InsertProject, 
   rdos, Rdo, InsertRdo,
   photos, Photo, InsertPhoto,
-  projectTeam
+  projectTeam,
+  teamMembers, TeamMember, InsertTeamMember
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -43,6 +44,13 @@ export interface IStorage {
   // Photos
   getPhotos(options: PhotoFilterOptions): Promise<Photo[]>;
   createPhoto(photo: InsertPhoto & { createdBy: number }): Promise<Photo>;
+  
+  // Team Members
+  getTeamMembers(projectId: number): Promise<TeamMember[]>;
+  getTeamMember(id: number): Promise<TeamMember | undefined>;
+  createTeamMember(member: InsertTeamMember & { createdBy: number }): Promise<TeamMember>;
+  updateTeamMember(id: number, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined>;
+  deleteTeamMember(id: number): Promise<boolean>;
   
   // Stats
   getStats(userId: number): Promise<any>;

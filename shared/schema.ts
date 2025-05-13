@@ -1,6 +1,8 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+// JSON type para campos de array/objetos
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 // Users table schema
 export const users = pgTable("users", {
@@ -164,3 +166,25 @@ export type PhotoItem = {
   caption?: string;
   createdBy?: number;
 };
+
+// Team Members table schema
+export const teamMembers = pgTable("team_members", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  company: text("company"),
+  contact: text("contact"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+});
+
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+  createdBy: true,
+});
+
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
