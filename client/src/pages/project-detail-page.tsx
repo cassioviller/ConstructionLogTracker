@@ -333,20 +333,12 @@ export default function ProjectDetailPage() {
               )}
             </div>
             <div className="border-t border-slate-200 pt-4 mt-4">
-              <div className="flex flex-col space-y-2">
-                <Link href={`/photos?projectId=${id}`}>
-                  <Button variant="ghost" className="w-full justify-between">
-                    <span>Ver galeria completa</span>
-                    <ArrowLeft className="h-4 w-4 rotate-180" />
-                  </Button>
-                </Link>
-                <Link href={`/new-rdo?projectId=${id}`}>
-                  <Button variant="ghost" className="w-full justify-between">
-                    <span>Criar novo RDO</span>
-                    <PlusIcon className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+              <Link href={`/photos?projectId=${id}`}>
+                <Button variant="ghost" className="w-full justify-between">
+                  <span>Ver galeria completa</span>
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

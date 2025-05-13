@@ -1,0 +1,20 @@
+. Alterações na Página de Detalhes do Projeto:
+Remover Módulo "Últimos Relatórios": O módulo/seção "Últimos Relatórios" que atualmente existe na página de visualização de um projeto deve ser removido.
+Módulo Galeria:
+Remover Botão "Criar novo RDO": O botão "Criar novo RDO" que está dentro do módulo/seção "Galeria" na página do projeto deve ser removido.
+Adicionar Miniaturas de Fotos: No módulo "Galeria", em vez de apenas listar nomes de arquivos ou não exibir nada, devem ser exibidas miniaturas (thumbnails) das fotos que foram adicionadas aos RDOs daquele projeto. Se não houver fotos, uma mensagem apropriada pode ser exibida.
+Funcionalidade "Editar Projeto":
+Habilitar Botão "Editar": Atualmente, na seção "Informações do Projeto", existe um botão "Editar" que não está funcional. Este botão deve ser habilitado.
+Campos Editáveis: Ao clicar em "Editar", o usuário deve poder modificar os seguintes campos do projeto:
+Responsável Técnico
+Data de Início
+Previsão de Término
+Cliente
+Endereço
+Status do Projeto
+Após a edição, as informações devem ser salvas no banco de dados (PostgreSQL).
+2. Alterações na Listagem de RDOs (Histórico de Relatórios do Projeto):
+Novas Ações para RDOs: Na tabela/lista de "Histórico de Relatórios" de um projeto, a coluna "AÇÕES" precisa ser modificada. Conforme a imagem que enviei anteriormente (que mostrava "Visualizar" e "PDF"), a solicitação agora é para que, para cada RDO listado, existam as seguintes ações:
+Botão "Editar": Permitir que o usuário edite o conteúdo do RDO selecionado. (Substitui o "Visualizar" ou é uma nova ação, e o "Visualizar" pode ser o clique no próprio RDO).
+Botão "Excluir": Permitir que o usuário exclua o RDO selecionado, com uma confirmação antes da exclusão definitiva.
+Os botões "Visualizar" e "PDF" devem ser removidos desta linha de ação, ou o "Visualizar" pode ser o comportamento ao clicar no nome/número do RDO na lista, e a geração de PDF pode ser movida para dentro da página de visualização/edição do RDO.
