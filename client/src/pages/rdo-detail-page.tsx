@@ -54,6 +54,12 @@ export default function RdoDetailPage() {
     queryKey: [`/api/projects/${projectId}`],
   });
   
+  // Buscar fotos do RDO separadamente
+  const { data: rdoPhotos, isLoading: isPhotosLoading } = useQuery({
+    queryKey: [`/api/rdos/${rdoId}/photos`],
+    enabled: !!rdoId, // Só busca se tiver rdoId
+  });
+  
   // Verificar se o usuário pode editar este RDO (implementação simples)
   // No futuro, poderia verificar permissões mais específicas
   const isEditable = !!user;
@@ -168,7 +174,7 @@ export default function RdoDetailPage() {
   const equipmentCount = Array.isArray(rdo.equipment) ? rdo.equipment.length : 0;
   const activitiesCount = Array.isArray(rdo.activities) ? rdo.activities.length : 0;
   const occurrencesCount = Array.isArray(rdo.occurrences) ? rdo.occurrences.length : 0;
-  const photosCount = Array.isArray(rdo.photos) ? rdo.photos.length : 0;
+  const photosCount = Array.isArray(rdoPhotos) ? rdoPhotos.length : 0;
 
   return (
     <MainLayout>
@@ -546,10 +552,14 @@ export default function RdoDetailPage() {
               <CardTitle>Registro Fotográfico</CardTitle>
             </CardHeader>
             <CardContent>
-              {Array.isArray(rdo.photos) && rdo.photos.length > 0 ? (
+              {isPhotosLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : Array.isArray(rdoPhotos) && rdoPhotos.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {rdo.photos.map((photo: any, index: number) => (
-                    <div key={index} className="border border-slate-200 rounded-lg overflow-hidden">
+                  {rdoPhotos.map((photo: any, index: number) => (
+                    <div key={photo.id} className="border border-slate-200 rounded-lg overflow-hidden">
                       <a href={photo.url} target="_blank" rel="noopener noreferrer">
                         <img 
                           src={photo.url} 
@@ -559,6 +569,9 @@ export default function RdoDetailPage() {
                       </a>
                       <div className="p-3">
                         <p className="text-sm text-slate-600">{photo.caption || `Foto ${index + 1}`}</p>
+                        {photo.userName && (
+                          <p className="text-xs text-slate-400 mt-1">Enviado por: {photo.userName}</p>
+                        )}
                       </div>
                     </div>
                   ))}
