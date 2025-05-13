@@ -331,33 +331,76 @@ export default function ProjectDetailPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-800">Equipe</h2>
-              <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
-                Gerenciar
+              <Button 
+                variant="link" 
+                className="text-primary hover:text-blue-700 text-sm font-medium p-0"
+                onClick={() => handleOpenTeamMemberDialog()}
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Adicionar Membro
               </Button>
             </div>
             <div className="space-y-4">
-              {project.team && project.team.length > 0 ? (
-                project.team.map((member) => (
-                  <div key={member.id} className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">
-                      {member.name?.charAt(0) || "U"}
+              {isTeamLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : teamMembers && teamMembers.length > 0 ? (
+                teamMembers.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/10">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">
+                        {member.name?.charAt(0) || "U"}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-slate-800">{member.name}</h3>
+                        <p className="text-xs text-slate-500">{member.role}</p>
+                        {member.company && <p className="text-xs text-slate-400">{member.company}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-slate-800">{member.name}</h3>
-                      <p className="text-xs text-slate-500">{member.jobTitle}</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleOpenTeamMemberDialog(member)}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-destructive hover:text-destructive/80" 
+                        onClick={() => deleteTeamMemberMutation.mutate(member.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 text-slate-500">
-                  Nenhum membro na equipe
+                <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                  <Users className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">Nenhum membro na equipe.</p>
+                  <Button 
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => handleOpenTeamMemberDialog()}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Adicionar primeiro membro
+                  </Button>
                 </div>
               )}
             </div>
             <div className="border-t border-slate-200 pt-4 mt-4">
-              <Button variant="ghost" className="w-full justify-between">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+                onClick={() => handleOpenTeamMemberDialog()}
+              >
                 <span>Adicionar membro</span>
-                <PlusIcon className="h-4 w-4" />
+                <UserPlus className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>
@@ -515,6 +558,115 @@ export default function ProjectDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog para adicionar/editar membros da equipe */}
+      <Dialog open={teamMemberDialogOpen} onOpenChange={setTeamMemberDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {currentMember ? "Editar Membro da Equipe" : "Adicionar Membro à Equipe"}
+            </DialogTitle>
+            <DialogDescription>
+              {currentMember 
+                ? "Atualize as informações do membro da equipe." 
+                : "Preencha os dados do novo membro da equipe."}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleTeamMemberSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Função</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Engenheiro, Técnico, Supervisor" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Empresa</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome da empresa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contato</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Telefone ou e-mail" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Observações sobre o membro" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTeamMemberDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createTeamMemberMutation.isPending || updateTeamMemberMutation.isPending}
+                >
+                  {(createTeamMemberMutation.isPending || updateTeamMemberMutation.isPending) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {currentMember ? "Atualizar" : "Adicionar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
