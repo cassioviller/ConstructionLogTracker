@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useParams } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusIcon, Pencil, Trash2 } from "lucide-react";
+import { PlusIcon, Pencil, Trash2, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,11 +23,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { 
+  Checkbox
+} from '@/components/ui/checkbox';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { WorkforceItem } from "@shared/schema";
+import { WorkforceItem, TeamMember } from "@shared/schema";
 import { v4 as uuidv4 } from 'uuid';
+import { Loader2 } from 'lucide-react';
 
 const workforceItemSchema = z.object({
   role: z.string().min(1, { message: "Função é obrigatória" }),
@@ -40,12 +46,25 @@ type WorkforceFormValues = z.infer<typeof workforceItemSchema>;
 interface WorkforceSectionProps {
   onChange: (workforce: WorkforceItem[]) => void;
   initialData?: WorkforceItem[];
+  projectId?: number | string;
 }
 
-export function WorkforceSection({ onChange, initialData = [] }: WorkforceSectionProps) {
+export function WorkforceSection({ onChange, initialData = [], projectId }: WorkforceSectionProps) {
+  const { id: paramProjectId } = useParams();
+  const effectiveProjectId = projectId || paramProjectId;
+  
   const [workforce, setWorkforce] = useState<WorkforceItem[]>(initialData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<Record<number, boolean>>({});
+  const [allSelected, setAllSelected] = useState(false);
+
+  // Busca a equipe do projeto
+  const { data: teamMembers, isLoading: isTeamLoading } = useQuery({
+    queryKey: [`/api/projects/${effectiveProjectId}/team-members`],
+    enabled: !!effectiveProjectId && isTeamDialogOpen,
+  });
 
   const form = useForm<WorkforceFormValues>({
     resolver: zodResolver(workforceItemSchema),
@@ -100,112 +119,261 @@ export function WorkforceSection({ onChange, initialData = [] }: WorkforceSectio
       form.reset();
     }
   };
+  
+  const handleTeamDialogOpenChange = (open: boolean) => {
+    setIsTeamDialogOpen(open);
+    if (open) {
+      // Reset selections when opening
+      setSelectedTeamMembers({});
+      setAllSelected(false);
+    }
+  };
+  
+  const handleToggleSelectAll = () => {
+    if (!teamMembers) return;
+    
+    const newAllSelected = !allSelected;
+    setAllSelected(newAllSelected);
+    
+    const newSelection: Record<number, boolean> = {};
+    if (newAllSelected) {
+      teamMembers.forEach((member: TeamMember) => {
+        newSelection[member.id] = true;
+      });
+    }
+    
+    setSelectedTeamMembers(newSelection);
+  };
+  
+  const handleToggleMember = (memberId: number) => {
+    setSelectedTeamMembers(prev => ({
+      ...prev,
+      [memberId]: !prev[memberId]
+    }));
+    
+    // Check if all are selected after this change
+    if (teamMembers) {
+      const updatedSelection = {
+        ...selectedTeamMembers,
+        [memberId]: !selectedTeamMembers[memberId]
+      };
+      
+      const allAreSelected = teamMembers.every((member: TeamMember) => 
+        updatedSelection[member.id]
+      );
+      
+      setAllSelected(allAreSelected);
+    }
+  };
+  
+  const handleAddTeamMembers = () => {
+    if (!teamMembers) return;
+    
+    const selectedMembers = teamMembers.filter((member: TeamMember) => 
+      selectedTeamMembers[member.id]
+    );
+    
+    if (selectedMembers.length === 0) return;
+    
+    // Convert selected team members to workforce items
+    const newWorkforceItems: WorkforceItem[] = selectedMembers.map((member: TeamMember) => ({
+      id: uuidv4(),
+      role: member.role,
+      quantity: 1,
+      startTime: "07:00",
+      endTime: "17:00",
+      notes: `${member.name}${member.company ? ` - ${member.company}` : ""}`
+    }));
+    
+    const updatedWorkforce = [...workforce, ...newWorkforceItems];
+    setWorkforce(updatedWorkforce);
+    onChange(updatedWorkforce);
+    setIsTeamDialogOpen(false);
+  };
 
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium leading-6 text-slate-900">Mão de Obra</h3>
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="flex items-center gap-1">
-                <PlusIcon className="h-4 w-4" />
-                Adicionar Função
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Editar Função" : "Adicionar Função"}</DialogTitle>
-                <DialogDescription>
-                  Informe os detalhes da mão de obra utilizada no dia.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Função</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Engenheiro, Pedreiro, Servente" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantidade</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min={1} 
-                            {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value))}
+          <div className="flex space-x-2">
+            {/* Botão para adicionar membros da equipe do projeto */}
+            <Dialog open={isTeamDialogOpen} onOpenChange={handleTeamDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  Adicionar Equipe
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Adicionar Membros da Equipe</DialogTitle>
+                  <DialogDescription>
+                    Selecione os membros da equipe do projeto que deseja adicionar como mão de obra neste relatório.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {isTeamLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : !teamMembers || teamMembers.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-slate-500">Nenhum membro da equipe cadastrado neste projeto.</p>
+                  </div>
+                ) : (
+                  <div className="py-4">
+                    <div className="flex items-center space-x-2 pb-4 border-b">
+                      <Checkbox 
+                        id="select-all" 
+                        checked={allSelected}
+                        onCheckedChange={handleToggleSelectAll}
+                      />
+                      <label 
+                        htmlFor="select-all" 
+                        className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Selecionar Todos
+                      </label>
+                    </div>
+                    
+                    <div className="max-h-[300px] overflow-y-auto mt-2">
+                      {teamMembers.map((member: TeamMember) => (
+                        <div key={member.id} className="flex items-center space-x-2 py-2 border-b border-slate-100">
+                          <Checkbox 
+                            id={`member-${member.id}`} 
+                            checked={!!selectedTeamMembers[member.id]}
+                            onCheckedChange={() => handleToggleMember(member.id)}
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-1">
+                            <label 
+                              htmlFor={`member-${member.id}`} 
+                              className="text-sm font-medium leading-none cursor-pointer"
+                            >
+                              {member.name}
+                            </label>
+                            <p className="text-xs text-slate-500">{member.role}{member.company ? ` - ${member.company}` : ''}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    onClick={handleAddTeamMembers}
+                    disabled={isTeamLoading || !teamMembers || teamMembers.length === 0 || Object.values(selectedTeamMembers).filter(Boolean).length === 0}
+                  >
+                    Adicionar Selecionados
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            {/* Botão para adicionar função manualmente */}
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center gap-1">
+                  <PlusIcon className="h-4 w-4" />
+                  Adicionar Função
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Editar Função" : "Adicionar Função"}</DialogTitle>
+                  <DialogDescription>
+                    Informe os detalhes da mão de obra utilizada no dia.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="startTime"
+                      name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Horário de Entrada</FormLabel>
+                          <FormLabel>Função</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input placeholder="Ex: Engenheiro, Pedreiro, Servente" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantidade</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min={1} 
+                              {...field} 
+                              onChange={e => field.onChange(parseInt(e.target.value))}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="startTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Horário de Entrada</FormLabel>
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="endTime"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Horário de Saída</FormLabel>
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <FormField
                       control={form.control}
-                      name="endTime"
+                      name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Horário de Saída</FormLabel>
+                          <FormLabel>Observações (opcional)</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input placeholder="Ex: Nomes, locais de trabalho" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Observações (opcional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Nomes, locais de trabalho" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <DialogFooter>
-                    <Button type="submit">{editingId ? "Atualizar" : "Adicionar"}</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                    
+                    <DialogFooter>
+                      <Button type="submit">{editingId ? "Atualizar" : "Adicionar"}</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         <div className="bg-slate-50 p-4 rounded-lg overflow-x-auto">
@@ -243,7 +411,7 @@ export function WorkforceSection({ onChange, initialData = [] }: WorkforceSectio
             </table>
           ) : (
             <div className="text-center py-4 text-slate-500">
-              Nenhuma mão de obra adicionada. Clique em "Adicionar Função" para começar.
+              Nenhuma mão de obra adicionada. Utilize os botões acima para adicionar.
             </div>
           )}
         </div>

@@ -202,12 +202,12 @@ export default function NewRdoPage() {
 
       <div className="space-y-6">
         <WeatherSection onChange={updateWeather} initialData={formData} />
-        <WorkforceSection onChange={updateWorkforce} />
+        <WorkforceSection onChange={updateWorkforce} projectId={projectId} />
         <EquipmentSection onChange={updateEquipment} />
         <ActivitiesSection onChange={updateActivities} />
         <OccurrencesSection onChange={updateOccurrences} />
         <PhotosSection onChange={updatePhotos} />
-        <CommentsSection onChange={updateComments} />
+        <CommentsSection onChange={updateComments} user={user} />
 
         <div className="border-t border-slate-200 pt-6 flex justify-between">
           <Button variant="outline" onClick={cancelForm}>
