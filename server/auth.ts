@@ -22,10 +22,28 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    // Verificar se a senha está no formato correto hash.salt
+    if (!stored.includes('.')) {
+      console.log('Formato de senha não é hash.salt, verificando igualdade simples');
+      return supplied === stored;
+    }
+
+    const [hashed, salt] = stored.split(".");
+    if (!hashed || !salt) {
+      console.log('Formato de senha inválido, falta hash ou salt');
+      return false;
+    }
+
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    
+    // Comparação segura em tempo constante
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('Erro ao comparar senhas:', error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -57,20 +75,14 @@ export function setupAuth(app: Express) {
           return done(null, false);
         }
         
-        // Para o usuário "admin" com senha "password" criado no storage.ts (primeiro login)
-        if (username === "admin" && password === "password") {
-          console.log("Usuário admin autenticado com sucesso");
+        // Verificar a senha usando nossa função aprimorada
+        if (await comparePasswords(password, user.password)) {
+          console.log(`Usuário ${username} autenticado com sucesso`);
           return done(null, user);
         }
-
-        // Para outros usuários, verifica a senha normalmente
-        if (!(await comparePasswords(password, user.password))) {
-          console.log("Senha incorreta");
-          return done(null, false);
-        }
         
-        console.log("Usuário autenticado com sucesso");
-        return done(null, user);
+        console.log("Senha incorreta");
+        return done(null, false);
       } catch (error) {
         console.error("Erro de autenticação:", error);
         return done(error);
