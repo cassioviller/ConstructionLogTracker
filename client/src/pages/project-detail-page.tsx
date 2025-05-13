@@ -278,7 +278,23 @@ export default function ProjectDetailPage() {
       <Card className="mb-6">
         <CardHeader className="flex flex-row justify-between items-center pb-2">
           <CardTitle className="text-lg">Informações do Projeto</CardTitle>
-          <Button variant="outline" size="sm" className="flex items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center"
+            onClick={() => {
+              // Inicializar o formulário com os dados atuais do projeto
+              projectForm.reset({
+                responsible: project.responsible?.name || "",
+                startDate: project.startDate,
+                endDate: project.endDate,
+                client: project.client,
+                location: project.location,
+                status: project.status || "active"
+              });
+              setProjectEditOpen(true);
+            }}
+          >
             <PencilIcon className="h-4 w-4 mr-2" />
             Editar
           </Button>
