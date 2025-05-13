@@ -206,16 +206,26 @@ export class MemStorage implements IStorage {
   async getRdos(projectId: number, options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }> {
     const { page = 1, limit = 10, search, month } = options;
     
+    console.log(`Método getRdos chamado - projectId: ${projectId}, Número de RDOs no sistema: ${this.rdos.size}`);
+    
+    // Listar todos os RDOs para debug
+    console.log("RDOs disponíveis:", Array.from(this.rdos.entries()).map(([id, rdo]) => `ID: ${id}, projectId: ${rdo.projectId}, number: ${rdo.number}`));
+    
     let rdos = Array.from(this.rdos.values())
-      .filter(rdo => rdo.projectId === projectId);
+      .filter(rdo => {
+        console.log(`Comparando: RDO projectId=${rdo.projectId} com parâmetro projectId=${projectId}`);
+        return Number(rdo.projectId) === Number(projectId);
+      });
+    
+    console.log(`Após filtro inicial: ${rdos.length} RDOs com projectId=${projectId}`);
     
     // Apply search filter if provided
     if (search) {
       const searchLower = search.toLowerCase();
       rdos = rdos.filter(rdo => {
         // Search in activities and occurrences
-        const activitiesText = JSON.stringify(rdo.activities).toLowerCase();
-        const occurrencesText = JSON.stringify(rdo.occurrences).toLowerCase();
+        const activitiesText = rdo.activities ? JSON.stringify(rdo.activities).toLowerCase() : '';
+        const occurrencesText = rdo.occurrences ? JSON.stringify(rdo.occurrences).toLowerCase() : '';
         return activitiesText.includes(searchLower) || occurrencesText.includes(searchLower);
       });
     }
@@ -243,6 +253,8 @@ export class MemStorage implements IStorage {
     // Paginate results
     const startIndex = (page - 1) * limit;
     const paginatedRdos = rdos.slice(startIndex, startIndex + limit);
+    
+    console.log(`Após paginação: ${paginatedRdos.length} RDOs sendo retornados`);
     
     // Add responsible info to each RDO
     const itemsWithResponsible = paginatedRdos.map(rdo => {
