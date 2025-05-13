@@ -73,14 +73,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Buscando RDOs para o projeto ${projectId}, página ${page}, limite ${limit}`);
       
       // Lista todos os RDOs para depuração
-      const allRdos = Array.from(storage.getAllRdosForDebug().values());
-      console.log(`Total de RDOs no sistema: ${allRdos.length}`);
-      console.log(`RDOs por projeto:`);
-      const rdosByProject = allRdos.reduce((acc, rdo) => {
-        acc[rdo.projectId] = (acc[rdo.projectId] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>);
-      console.log(JSON.stringify(rdosByProject, null, 2));
+      try {
+        const debugMap = await storage.getAllRdosForDebug();
+        const allRdos = Array.from(debugMap.values());
+        console.log(`Total de RDOs no sistema: ${allRdos.length}`);
+        console.log(`RDOs por projeto:`);
+        const rdosByProject = allRdos.reduce((acc: Record<number, number>, rdo) => {
+          acc[rdo.projectId] = (acc[rdo.projectId] || 0) + 1;
+          return acc;
+        }, {} as Record<number, number>);
+        console.log(JSON.stringify(rdosByProject, null, 2));
+      } catch (debugError) {
+        console.error("Erro ao carregar RDOs para debug:", debugError);
+      }
 
       const result = await storage.getRdos(projectId, { page, limit, search, month });
       console.log(`Resultado da busca: ${result.items.length} RDOs encontrados para o projeto ${projectId}`);
@@ -323,8 +328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota de depuração para verificar RDOs diretamente (temporária)
   app.get("/api/debug/rdos", async (req, res) => {
     try {
-      const rdosMap = storage.getAllRdosForDebug();
-      const rdos = Array.from(rdosMap.entries()).map(([id, rdo]) => ({
+      const rdosMap = await storage.getAllRdosForDebug();
+      const rdos = Array.from(rdosMap.entries()).map(([id, rdo]: [number, any]) => ({
         id,
         projectId: rdo.projectId,
         number: rdo.number,
