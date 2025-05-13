@@ -211,10 +211,15 @@ export class MemStorage implements IStorage {
     // Listar todos os RDOs para debug
     console.log("RDOs disponíveis:", Array.from(this.rdos.entries()).map(([id, rdo]) => `ID: ${id}, projectId: ${rdo.projectId}, number: ${rdo.number}`));
     
+    // Converter projectId para número para garantir a comparação correta
+    const numericProjectId = Number(projectId);
+    console.log(`Parâmetro projectId convertido para número: ${numericProjectId}`);
+    
     let rdos = Array.from(this.rdos.values())
       .filter(rdo => {
-        console.log(`Comparando: RDO projectId=${rdo.projectId} com parâmetro projectId=${projectId}`);
-        return Number(rdo.projectId) === Number(projectId);
+        const rdoProjectId = Number(rdo.projectId);
+        console.log(`Comparando: RDO projectId=${rdoProjectId} (${typeof rdoProjectId}) com parâmetro projectId=${numericProjectId} (${typeof numericProjectId})`);
+        return rdoProjectId === numericProjectId;
       });
     
     console.log(`Após filtro inicial: ${rdos.length} RDOs com projectId=${projectId}`);
@@ -375,12 +380,25 @@ export class MemStorage implements IStorage {
   async createRdo(rdoData: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo> {
     const id = this.rdoIdCounter++;
     const now = new Date();
+    
+    // Garantir que projectId seja numérico
+    const projectId = Number(rdoData.projectId);
+    
+    console.log(`Criando RDO - ID: ${id}, projectId: ${projectId}, number: ${rdoData.number}`);
+    
     const rdo: Rdo = {
       ...rdoData,
       id,
+      projectId, // Usar o projectId convertido para número
       createdAt: now
     };
+    
     this.rdos.set(id, rdo);
+    
+    // Verificação adicional
+    console.log(`RDO criado e salvo - Verificando: ${this.rdos.has(id)}`);
+    console.log(`RDOs atuais: ${Array.from(this.rdos.entries()).map(([id, r]) => `ID: ${id}, projectId: ${r.projectId}`)}`);
+    
     return rdo;
   }
   
