@@ -47,6 +47,18 @@ export default function ProjectDetailPage() {
     queryKey: [`/api/projects/${id}/team`],
   });
   
+  // Buscar fotos para o projeto
+  const { data: photos, isLoading: isPhotosLoading } = useQuery({
+    queryKey: [`/api/photos`, { projectId: id }],
+    queryFn: async () => {
+      const res = await fetch(`/api/photos?projectId=${id}`);
+      if (!res.ok) {
+        throw new Error("Erro ao buscar fotos");
+      }
+      return await res.json();
+    },
+  });
+  
   // Formulário para adicionar/editar membro da equipe
   const form = useForm<TeamMemberFormValues>({
     resolver: zodResolver(teamMemberSchema),
@@ -284,45 +296,55 @@ export default function ProjectDetailPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-800">Galeria</h2>
-              <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
-                Ver todas
-              </Button>
+              <Link href={`/project/${id}/photo-gallery`}>
+                <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
+                  Ver todas
+                </Button>
+              </Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <img
-                src="https://images.unsplash.com/photo-1583806999637-30509e2df2b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
-                alt="Fundação em progresso"
-                className="rounded-md h-16 w-full object-cover"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
-                alt="Soldagem da estrutura metálica"
-                className="rounded-md h-16 w-full object-cover"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1578530332818-6ba472e67b9f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
-                alt="Concretagem do segundo pavimento"
-                className="rounded-md h-16 w-full object-cover"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1621155346337-1d19476ba7d6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
-                alt="Vista geral da obra"
-                className="rounded-md h-16 w-full object-cover"
-              />
-              <img
-                src="https://pixabay.com/get/g659fc68ce6676cec6054a49737c2d5bf28b7594cc5a84fbdd3673de1d1b3e3b90b637dff941d0c95766e95ba9af380d97a93b70729b7c0aacb615a57e97cd6ae_1280.jpg"
-                alt="Trabalho interno de estruturação"
-                className="rounded-md h-16 w-full object-cover"
-              />
-              <div className="relative h-16 rounded-md bg-slate-100 flex items-center justify-center">
-                <span className="text-slate-500 font-medium">+{project.photoCount || 0}</span>
-              </div>
+              {isPhotosLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-md h-16 w-full bg-slate-200 animate-pulse"></div>
+                ))
+              ) : photos && photos.length > 0 ? (
+                <>
+                  {photos.slice(0, 5).map((photo) => (
+                    <img
+                      key={photo.id}
+                      src={photo.url}
+                      alt={photo.caption || "Foto do projeto"}
+                      className="rounded-md h-16 w-full object-cover"
+                    />
+                  ))}
+                  {photos.length > 5 && (
+                    <div className="relative h-16 rounded-md bg-slate-100 flex items-center justify-center">
+                      <span className="text-slate-500 font-medium">+{photos.length - 5}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="col-span-3 py-4 text-center text-slate-500">
+                  <ImageIcon className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <p>Nenhuma foto disponível</p>
+                </div>
+              )}
             </div>
             <div className="border-t border-slate-200 pt-4 mt-4">
-              <Button variant="ghost" className="w-full justify-between">
-                <span>Adicionar fotos</span>
-                <PlusIcon className="h-4 w-4" />
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Link href={`/project/${id}/photo-gallery`}>
+                  <Button variant="ghost" className="w-full justify-between">
+                    <span>Ver galeria completa</span>
+                    <ArrowLeft className="h-4 w-4 rotate-180" />
+                  </Button>
+                </Link>
+                <Link href={`/project/${id}/add-photos`}>
+                  <Button variant="ghost" className="w-full justify-between">
+                    <span>Adicionar fotos</span>
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>
