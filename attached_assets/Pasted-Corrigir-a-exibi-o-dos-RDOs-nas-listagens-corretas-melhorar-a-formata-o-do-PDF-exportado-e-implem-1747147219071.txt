@@ -1,0 +1,39 @@
+Corrigir a exibição dos RDOs nas listagens corretas, melhorar a formatação do PDF exportado e implementar um botão para adicionar rapidamente a equipe do projeto à seção de mão de obra do RDO.
+Seção 1: Correção na Listagem e Vínculo de Relatórios Diários de Obra (RDOs) (Prioridade Alta)
+Problema de Listagem de RDOs:
+Sintoma: Os RDOs criados estão aparecendo corretamente na seção "Últimos Relatórios" do Dashboard (conforme imagem image (3).png). No entanto, eles não estão sendo listados:
+Dentro da página de detalhes do projeto correspondente, na seção "Histórico de Relatórios" (conforme imagem image (1).png, que mostra "Nenhum relatório encontrado" para o projeto Sorocaba, embora um RDO exista para ele).
+Na página geral de "Relatórios" acessada pelo menu lateral.
+Ação Requerida:
+Verificar e Corrigir Vínculo: Garanta que cada RDO criado seja corretamente associado (vinculado) ao seu respectivo projeto no banco de dados PostgreSQL.
+Listagem no Projeto: Modifique a consulta e a lógica de exibição na página de detalhes do projeto para que a seção "Histórico de Relatórios" liste todos os RDOs pertencentes àquele projeto específico. A lista deve exibir colunas como RDO #, Data, Responsável (se houver), Status, e Ações (como "Visualizar").
+Listagem Geral de Relatórios: A página "Relatórios" (acessada pelo menu) deve listar todos os RDOs de todos os projetos, ou permitir filtros por projeto. Garanta que esta página também exiba os RDOs corretamente.
+Acesso ao RDO: Certifique-se de que, ao clicar em "Visualizar" em qualquer uma dessas listas, o RDO correto seja aberto sem erros 404.
+Seção 2: Melhoria na Formatação da Exportação/Impressão de PDF do RDO (Prioridade Média)
+Problema de Formatação do PDF:
+Sintoma: A funcionalidade de "Baixar PDF" e "Imprimir" na tela de visualização do RDO (conforme imagem image (2).png) está gerando um PDF, mas a formatação está inadequada ou ausente, não apresentando um layout profissional.
+Ação Requerida:
+Definir Layout Profissional: Crie um template de PDF bem estruturado e com design limpo para os RDOs. O layout deve incluir:
+Cabeçalho: Logo da empresa (se cadastrado), Nome da Empresa, Título "Relatório Diário de Obra", Número do RDO, Nome da Obra, Cliente, Local da Obra e Data do Relatório.
+Seções Claras: Divida o PDF em seções correspondentes aos campos do RDO (Informações do RDO, Condições Climáticas, Mão de Obra, Equipamentos, Atividades Executadas, Ocorrências/Eventos, Registro Fotográfico, Comentários).
+Tabelas para Dados Estruturados: Use tabelas para listar Mão de Obra (com colunas para Função, Quantidade, Nomes, Horários se houver) e Equipamentos (Nome, Quantidade, Horas).
+Textos Legíveis: Formate os textos das Atividades, Ocorrências e Comentários de forma clara.
+Inclusão de Fotos: As fotos anexadas ao RDO devem ser incluídas no PDF, preferencialmente em uma galeria ao final do relatório ou incorporadas na seção de Registro Fotográfico, com suas legendas. Otimize o tamanho das imagens para não gerar PDFs excessivamente grandes.
+Rodapé: Pode incluir número da página e data de emissão do PDF.
+Biblioteca de Geração de PDF: Utilize uma biblioteca robusta para Node.js (como pdfmake, puppeteer para renderizar HTML para PDF, ou outra de sua escolha) para gerar os PDFs com base no template definido.
+Consistência: A função "Imprimir" deve, idealmente, usar o mesmo layout do PDF gerado.
+Seção 3: Adicionar Botão "Adicionar Equipe" na Seção de Mão de Obra do RDO (Prioridade Alta)
+Nova Funcionalidade na Mão de Obra do RDO:
+Contexto: A funcionalidade de cadastro de equipe por projeto já foi implementada. Agora, precisamos facilitar a adição dessa equipe ao RDO.
+Interface Atual: A seção "Mão de Obra" na tela de criação/edição do RDO (conforme imagem image.png) atualmente possui apenas o botão "+ Adicionar Função".
+Ação Requerida:
+Adicionar Novo Botão: Ao lado ou abaixo do botão existente "+ Adicionar Função", adicione um novo botão com o texto "Adicionar Equipe do Projeto" ou simplesmente "Adicionar Equipe".
+Modal de Seleção de Equipe: Ao clicar no botão "Adicionar Equipe", um modal ou lista suspensa deve aparecer, exibindo todos os membros da equipe que foram previamente cadastrados para o projeto ao qual o RDO pertence.
+A lista deve mostrar o Nome e a Função de cada membro da equipe.
+Permitir que o usuário selecione múltiplos membros da equipe (checkboxes ao lado de cada nome) ou uma opção "Selecionar Todos".
+Adição ao RDO: Após a seleção e confirmação, os membros da equipe selecionados devem ser adicionados à lista de mão de obra do RDO, com seus Nomes e Funções preenchidos automaticamente. Os campos de Quantidade (padrão 1 para cada membro individual), Horários e Observações ficariam em branco para preenchimento posterior pelo usuário para aquele dia específico.
+Manter Adição Manual: O botão "+ Adicionar Função" deve continuar funcionando como antes, para adições manuais de funções ou pessoal não cadastrado na equipe fixa.
+Instruções Adicionais:
+Certifique-se de que todas as alterações sejam refletidas corretamente no banco de dados PostgreSQL.
+Mantenha a consistência da interface do usuário e a responsividade da aplicação.
+Teste exaustivamente as correções e as novas funcionalidades.
