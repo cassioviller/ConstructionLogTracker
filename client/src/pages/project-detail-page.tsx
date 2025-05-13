@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
+  const [_, navigate] = useLocation();
 
   const { data: project, isLoading } = useQuery({
     queryKey: [`/api/projects/${id}`],
@@ -318,10 +319,18 @@ export default function ProjectDetailPage() {
                         </td>
                         <td className="py-3 px-4 text-sm text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button variant="link" className="text-primary">
+                            <Button 
+                              variant="link" 
+                              className="text-primary"
+                              onClick={() => navigate(`/project/${id}/rdo/${report.id}`)}
+                            >
                               Visualizar
                             </Button>
-                            <Button variant="link" className="text-slate-500">
+                            <Button 
+                              variant="link" 
+                              className="text-slate-500"
+                              onClick={() => window.open(`/api/rdos/${report.id}/pdf`, '_blank')}
+                            >
                               PDF
                             </Button>
                           </div>
@@ -340,11 +349,13 @@ export default function ProjectDetailPage() {
             </div>
           )}
           <div className="p-4 border-t border-slate-200 text-center">
-            <Link href={`/project/${id}/rdo-history`}>
-              <Button variant="link" className="text-primary hover:text-blue-700 font-medium">
-                Ver todos os RDOs
-              </Button>
-            </Link>
+            <Button 
+              variant="link" 
+              className="text-primary hover:text-blue-700 font-medium"
+              onClick={() => navigate(`/project/${id}/rdo-history`)}
+            >
+              Ver todos os relatórios
+            </Button>
           </div>
         </CardContent>
       </Card>

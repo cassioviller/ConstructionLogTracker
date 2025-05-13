@@ -11,6 +11,7 @@ import ProjectsPage from "@/pages/projects-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
 import NewRdoPage from "@/pages/new-rdo-page";
 import RdoHistoryPage from "@/pages/rdo-history-page";
+import RdoDetailPage from "@/pages/rdo-detail-page";
 import PhotosPage from "@/pages/photos-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -23,6 +24,8 @@ function Router() {
       <ProtectedRoute path="/project/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/project/:id/new-rdo" component={NewRdoPage} />
       <ProtectedRoute path="/project/:id/rdo-history" component={RdoHistoryPage} />
+      <ProtectedRoute path="/project/:id/rdo/:rdoId" component={RdoDetailPage} />
+      <ProtectedRoute path="/reports" component={RdoHistoryPage} />
       <ProtectedRoute path="/photos" component={PhotosPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
