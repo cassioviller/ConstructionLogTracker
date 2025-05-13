@@ -26,7 +26,18 @@ const teamMemberSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Schema para validação do formulário de edição do projeto
+const projectEditSchema = z.object({
+  responsible: z.string().optional(),
+  startDate: z.string().min(1, { message: "Data de início é obrigatória" }),
+  endDate: z.string().min(1, { message: "Previsão de término é obrigatória" }),
+  client: z.string().min(1, { message: "Cliente é obrigatório" }),
+  location: z.string().min(1, { message: "Endereço é obrigatório" }),
+  status: z.string().min(1, { message: "Status é obrigatório" }),
+});
+
 type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;
+type ProjectEditFormValues = z.infer<typeof projectEditSchema>;
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -34,6 +45,7 @@ export default function ProjectDetailPage() {
   const { toast } = useToast();
   const [teamMemberDialogOpen, setTeamMemberDialogOpen] = useState(false);
   const [currentMember, setCurrentMember] = useState<any>(null);
+  const [projectEditOpen, setProjectEditOpen] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: [`/api/projects/${id}`],
@@ -69,6 +81,19 @@ export default function ProjectDetailPage() {
       contact: "",
       notes: ""
     },
+  });
+  
+  // Formulário para editar o projeto
+  const projectForm = useForm<ProjectEditFormValues>({
+    resolver: zodResolver(projectEditSchema),
+    defaultValues: {
+      responsible: "",
+      startDate: "",
+      endDate: "",
+      client: "",
+      location: "",
+      status: "active"
+    }
   });
 
   // Mutação para criar membro da equipe
@@ -147,6 +172,33 @@ export default function ProjectDetailPage() {
       toast({
         title: "Erro",
         description: "Erro ao remover membro da equipe: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutação para atualizar o projeto
+  const updateProjectMutation = useMutation({
+    mutationFn: async (data: ProjectEditFormValues) => {
+      const res = await apiRequest(
+        "PUT",
+        `/api/projects/${id}`,
+        data
+      );
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}`] });
+      toast({
+        title: "Projeto atualizado",
+        description: "Projeto atualizado com sucesso.",
+      });
+      setProjectEditOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar projeto: " + error.message,
         variant: "destructive",
       });
     },
