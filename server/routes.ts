@@ -405,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recent reports for dashboard
-  app.get("/api/recent-reports", requireAuth, async (req, res) => {
+  app.get(["/api/recent-reports", "/api/reports/recent"], requireAuth, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 5;
       console.log("Buscando relatórios recentes para o usuário ID:", req.user!.id);

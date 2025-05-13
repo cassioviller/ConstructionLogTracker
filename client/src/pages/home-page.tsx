@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Helmet } from "react-helmet";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,7 +20,7 @@ export default function HomePage() {
 
   // Fetch recent reports
   const { data: recentReports, isLoading: isLoadingReports } = useQuery({
-    queryKey: ["/api/reports/recent"],
+    queryKey: ["/api/recent-reports"],
   });
 
   // Fetch stats
