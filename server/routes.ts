@@ -75,6 +75,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao buscar relatórios" });
     }
   });
+  
+  // Rota para obter todos os RDOs (independente do projeto)
+  app.get("/api/reports", requireAuth, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+      const month = req.query.month as string;
+
+      const result = await storage.getAllRdos({ page, limit, search, month });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar todos os relatórios" });
+    }
+  });
 
   app.get("/api/projects/:id/next-rdo-number", requireAuth, async (req, res) => {
     try {

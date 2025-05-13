@@ -262,6 +262,73 @@ export class MemStorage implements IStorage {
     };
   }
 
+  async getAllRdos(options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }> {
+    const { page = 1, limit = 10, search, month } = options;
+    
+    // Get all RDOs without project filter
+    let rdos = Array.from(this.rdos.values());
+    
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      rdos = rdos.filter(rdo => {
+        // Search in activities and occurrences
+        const activitiesText = JSON.stringify(rdo.activities).toLowerCase();
+        const occurrencesText = JSON.stringify(rdo.occurrences).toLowerCase();
+        return activitiesText.includes(searchLower) || occurrencesText.includes(searchLower);
+      });
+    }
+    
+    // Apply month filter if provided
+    if (month) {
+      const monthNumber = parseInt(month);
+      rdos = rdos.filter(rdo => {
+        const rdoDate = new Date(rdo.date);
+        return rdoDate.getMonth() + 1 === monthNumber;
+      });
+    }
+    
+    // Sort by date and number, most recent first
+    rdos.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      return b.number - a.number;
+    });
+    
+    const total = rdos.length;
+    const totalPages = Math.ceil(total / limit);
+    
+    // Paginate results
+    const startIndex = (page - 1) * limit;
+    const paginatedRdos = rdos.slice(startIndex, startIndex + limit);
+    
+    // Add responsible info and project info to each RDO
+    const enhancedItems = paginatedRdos.map(rdo => {
+      const user = rdo.createdBy ? this.users.get(rdo.createdBy) : undefined;
+      const project = this.projects.get(rdo.projectId);
+      
+      return {
+        ...rdo,
+        responsible: user ? {
+          id: user.id,
+          name: user.name,
+          jobTitle: user.jobTitle
+        } : undefined,
+        projectName: project?.name || "Projeto não encontrado",
+        createdByName: user?.name || "Usuário não encontrado",
+        workforceCount: Array.isArray(rdo.workforce) ? rdo.workforce.length : 0,
+        occurrenceCount: Array.isArray(rdo.occurrences) ? rdo.occurrences.length : 0
+      };
+    });
+    
+    return {
+      items: enhancedItems,
+      total,
+      totalPages
+    };
+  }
+
   async getRdo(id: number): Promise<Rdo | undefined> {
     const rdo = this.rdos.get(id);
     if (!rdo) return undefined;
