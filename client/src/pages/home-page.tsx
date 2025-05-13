@@ -35,10 +35,6 @@ export default function HomePage() {
 
   return (
     <Layout>
-      <Helmet>
-        <title>Dashboard | Meu Diário de Obra Pro</title>
-        <meta name="description" content="Painel de controle do sistema Meu Diário de Obra Pro - gerencie seus projetos e relatórios diários de obra." />
-      </Helmet>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
@@ -81,10 +77,10 @@ export default function HomePage() {
               <div>
                 <p className="text-sm text-slate-500">Relatórios (RDOs)</p>
                 <h3 className="text-3xl font-bold mt-2">
-                  {isLoadingProjects ? (
+                  {isLoadingStats ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    "42"
+                    stats?.reports || 0
                   )}
                 </h3>
               </div>
@@ -101,10 +97,10 @@ export default function HomePage() {
               <div>
                 <p className="text-sm text-slate-500">Fotos Registradas</p>
                 <h3 className="text-3xl font-bold mt-2">
-                  {isLoadingProjects ? (
+                  {isLoadingStats ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    "156"
+                    stats?.photos || 0
                   )}
                 </h3>
               </div>
@@ -145,7 +141,7 @@ export default function HomePage() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-slate-500">
-                          Progresso: <span className="font-medium text-slate-700">{project.progress}%</span>
+                          Status: <span className="font-medium text-slate-700">{project.status || 'Em andamento'}</span>
                         </div>
                         <Link href={`/projects/${project.id}`}>
                           <a className="text-sm text-primary hover:text-blue-700">Detalhes →</a>
@@ -181,7 +177,7 @@ export default function HomePage() {
                 <div className="py-8 flex justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : recentReports && recentReports.length > 0 ? (
+              ) : (recentReports && Array.isArray(recentReports) && recentReports.length > 0) ? (
                 <div className="space-y-3">
                   {recentReports.map((report: any) => (
                     <div key={report.id} className="flex items-start p-3 rounded-lg border border-slate-200 hover:bg-slate-50">
