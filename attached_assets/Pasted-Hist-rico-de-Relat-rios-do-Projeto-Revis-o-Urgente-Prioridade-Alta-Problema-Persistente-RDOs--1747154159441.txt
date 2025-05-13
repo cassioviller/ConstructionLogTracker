@@ -1,0 +1,23 @@
+Histórico de Relatórios do Projeto (Revisão Urgente - Prioridade Alta):
+Problema Persistente: RDOs salvos não aparecem no "Histórico de Relatórios" da página do projeto específico (imagem image.png fornecida anteriormente mostra "Nenhum relatório encontrado").
+Ação (Reiterar e Verificar):
+Vínculo RDO-Projeto: Ao salvar RDO, confirme que o projeto_id correto está sendo gravado na tabela rdos.
+Backend API (Histórico): Endpoint que serve dados para o histórico do projeto DEVE filtrar RDOs pelo projeto_id do projeto visualizado. Query SQL exemplo: SELECT id, numero_rdo, data_rdo, responsavel_id, status FROM rdos WHERE projeto_id = $1 ORDER BY data_rdo DESC;.
+Frontend: Garantir que a lista seja atualizada ao carregar a página do projeto.
+Critério: Todos os RDOs de um projeto são listados corretamente em seu "Histórico de Relatórios".
+3. PDF do RDO - Especificação Detalhada do Layout (Prioridade Média):
+Problema: Layout do PDF inadequado.
+Ação (Layout Vertical Detalhado):
+Estrutura Geral: PDF com seções uma abaixo da outra, layout profissional.
+Cabeçalho do PDF: Logo da Empresa (se houver, alinhado à esquerda/direita), Nome da Empresa, Título "Relatório Diário de Obra", e abaixo, em formato de tabela ou lista clara: Nº RDO, Nome da Obra, Cliente, Local da Obra, Data do Relatório.
+Seções (numeradas e com títulos em negrito):
+Resumo do Relatório: Texto descritivo do resumo.
+Condições Climáticas: Tabela ou layout claro mostrando Manhã, Tarde, Noite com ícones/descrições e campo de observações climáticas gerais.
+Mão de Obra: Tabela com colunas: "Função", "Previsto (Qtd)", "Presente (Qtd)", "Nomes/Observações", "Horas Trabalhadas" (se aplicável).
+Equipamentos: Tabela com colunas: "Equipamento", "Quantidade", "Horas de Uso", "Status/Observações".
+Atividades Executadas: Lista numerada ou com marcadores das atividades, cada uma com sua descrição e status (% conclusão, se houver).
+Ocorrências (Eventos): Lista numerada ou com marcadores das ocorrências, cada uma com sua descrição e tags (se houver).
+Registro Fotográfico: Título da seção. As fotos devem ser incorporadas, 2 ou 3 por linha, com boa resolução mas otimizadas. Cada foto deve ter sua legenda abaixo dela. Se não houver fotos, exibir "Nenhuma foto registrada para este relatório".
+Comentários Adicionais: Texto dos comentários.
+Rodapé do PDF: Número da página (Ex: "Página 1 de 3"), Data e Hora de Emissão do PDF.
+Geração (Node.js): Usar pdfmake ou puppeteer (com HTML template dedicado para o PDF) para alta fidelidade.

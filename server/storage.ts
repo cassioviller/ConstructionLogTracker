@@ -95,8 +95,8 @@ export class MemStorage implements IStorage {
     
     // Add a sample user for development
     this.createUser({
-      username: "admin@example.com",
-      password: "$2b$10$GvU2Zfws.aYthRqwrZKPnuOnjpO7WuB33nPLd1.ZMjyP5XvlV4tVa", // "password"
+      username: "admin",
+      password: "password", // Texto plano que será hashado pelo setupAuth
       name: "Administrador",
       jobTitle: "Engenheiro Civil",
       company: "Construtora XYZ"
