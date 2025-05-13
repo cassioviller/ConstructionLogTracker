@@ -71,6 +71,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const month = req.query.month as string;
 
       console.log(`Buscando RDOs para o projeto ${projectId}, página ${page}, limite ${limit}`);
+      console.log(`Query params completos:`, req.query);
+      
+      // Verificar se o projeto existe
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        console.log(`Projeto ${projectId} não encontrado`);
+        return res.status(404).json({ message: "Projeto não encontrado" });
+      }
+      console.log(`Projeto ${projectId} encontrado: ${project.name}`);
       
       // Lista todos os RDOs para depuração
       try {
@@ -78,22 +87,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const allRdos = Array.from(debugMap.values());
         console.log(`Total de RDOs no sistema: ${allRdos.length}`);
         console.log(`RDOs por projeto:`);
+        
+        // Agrupar RDOs por projectId
         const rdosByProject = allRdos.reduce((acc: Record<number, number>, rdo) => {
-          acc[rdo.projectId] = (acc[rdo.projectId] || 0) + 1;
+          const pidKey = rdo.projectId;
+          acc[pidKey] = (acc[pidKey] || 0) + 1;
           return acc;
         }, {} as Record<number, number>);
+        
         console.log(JSON.stringify(rdosByProject, null, 2));
+        
+        // Mostrar dados completos dos RDOs para este projeto
+        const projectRdos = allRdos.filter(rdo => rdo.projectId === projectId);
+        console.log(`RDOs específicos para o projeto ${projectId}:`, 
+          projectRdos.map(rdo => ({ 
+            id: rdo.id, 
+            projectId: rdo.projectId,
+            number: rdo.number,
+            date: rdo.date
+          }))
+        );
       } catch (debugError) {
         console.error("Erro ao carregar RDOs para debug:", debugError);
       }
 
+      // Obter RDOs do projeto com paginação
       const result = await storage.getRdos(projectId, { page, limit, search, month });
       console.log(`Resultado da busca: ${result.items.length} RDOs encontrados para o projeto ${projectId}`);
       
+      // Enviar resposta detalhada
+      console.log("Respondendo com:", JSON.stringify(result));
       res.json(result);
     } catch (error) {
       console.error("Erro ao buscar relatórios:", error);
-      res.status(500).json({ message: "Erro ao buscar relatórios" });
+      res.status(500).json({ 
+        message: "Erro ao buscar relatórios",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

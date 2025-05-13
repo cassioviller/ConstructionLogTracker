@@ -52,13 +52,26 @@ export default function RdoHistoryPage() {
       console.log(`Buscando RDOs para projeto ${projectId} com parâmetros:`, params.toString());
       
       try {
-        const res = await fetch(`${baseUrl}?${params.toString()}`);
+        const url = `${baseUrl}?${params.toString()}`;
+        console.log("URL de requisição completa:", url);
+        
+        const res = await fetch(url);
         if (!res.ok) {
           console.error(`Erro ao buscar RDOs: ${res.status} ${res.statusText}`);
+          
+          // Tenta ler o corpo da resposta para obter mais detalhes do erro
+          try {
+            const errorBody = await res.text();
+            console.error("Detalhes do erro:", errorBody);
+          } catch (e) {
+            console.error("Não foi possível ler detalhes do erro");
+          }
+          
           throw new Error(`Failed to fetch reports: ${res.status}`);
         }
         
         const data = await res.json();
+        console.log("Resposta completa da API:", JSON.stringify(data, null, 2));
         console.log(`RDOs recebidos: ${data.items?.length || 0} registros`);
         return data;
       } catch (error) {
