@@ -1,218 +1,185 @@
-import { WeatherType } from "@shared/schema";
-import { 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { 
-  Cloud, 
-  CloudRain, 
-  Moon, 
-  Sun, 
-  Wind 
-} from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+import WeatherOption from "@/components/ui/weather-option";
 
 type WeatherSectionProps = {
-  control: any;
-  disabled?: boolean;
+  onChange: (data: any) => void;
+  initialData?: any;
 };
 
-export function WeatherSection({ control, disabled = false }: WeatherSectionProps) {
-  const weatherOptions: { value: WeatherType; label: string; icon: any }[] = [
-    { value: "sunny", label: "Ensolarado", icon: Sun },
-    { value: "cloudy", label: "Nublado", icon: Cloud },
-    { value: "rainy", label: "Chuvoso", icon: CloudRain },
-    { value: "windy", label: "Ventoso", icon: Wind },
-    { value: "clear", label: "Limpo", icon: Moon },
-  ];
+export function WeatherSection({ onChange, initialData }: WeatherSectionProps) {
+  const [weatherData, setWeatherData] = useState({
+    weatherMorning: initialData?.weatherMorning || "sunny",
+    weatherAfternoon: initialData?.weatherAfternoon || "cloudy",
+    weatherNight: initialData?.weatherNight || "rainy",
+    weatherNotes: initialData?.weatherNotes || "",
+  });
+
+  const handleWeatherChange = (period: string, value: string) => {
+    const updatedData = {
+      ...weatherData,
+      [period]: value,
+    };
+    setWeatherData(updatedData);
+    onChange(updatedData);
+  };
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const updatedData = {
+      ...weatherData,
+      weatherNotes: e.target.value,
+    };
+    setWeatherData(updatedData);
+    onChange(updatedData);
+  };
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-medium leading-6 text-slate-900">Condições Climáticas</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Morning Weather */}
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <FormField
-            control={control}
-            name="weatherMorning"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Manhã</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2"
-                    disabled={disabled}
-                  >
-                    {weatherOptions.slice(0, 4).map((option) => (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`morning-${option.value}`}
-                          className="peer sr-only"
-                          disabled={disabled}
-                        />
-                        <Label
-                          htmlFor={`morning-${option.value}`}
-                          className="flex flex-col items-center justify-center p-2 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary-50"
-                        >
-                          <option.icon className={`h-6 w-6 ${option.value === "sunny" ? "text-amber-500" : option.value === "cloudy" ? "text-slate-400" : option.value === "rainy" ? "text-blue-500" : "text-slate-500"}`} />
-                          <span className="mt-1 text-xs">{option.label}</span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="weatherMorningNotes"
-            render={({ field }) => (
-              <FormItem className="mt-2">
-                <FormControl>
-                  <Input 
-                    placeholder="Observações (opcional)" 
-                    {...field} 
-                    disabled={disabled}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Afternoon Weather */}
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <FormField
-            control={control}
-            name="weatherAfternoon"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Tarde</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2"
-                    disabled={disabled}
-                  >
-                    {weatherOptions.slice(0, 4).map((option) => (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`afternoon-${option.value}`}
-                          className="peer sr-only"
-                          disabled={disabled}
-                        />
-                        <Label
-                          htmlFor={`afternoon-${option.value}`}
-                          className="flex flex-col items-center justify-center p-2 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary-50"
-                        >
-                          <option.icon className={`h-6 w-6 ${option.value === "sunny" ? "text-amber-500" : option.value === "cloudy" ? "text-slate-400" : option.value === "rainy" ? "text-blue-500" : "text-slate-500"}`} />
-                          <span className="mt-1 text-xs">{option.label}</span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="weatherAfternoonNotes"
-            render={({ field }) => (
-              <FormItem className="mt-2">
-                <FormControl>
-                  <Input 
-                    placeholder="Observações (opcional)" 
-                    {...field} 
-                    disabled={disabled}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Night Weather */}
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <FormField
-            control={control}
-            name="weatherNight"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Noite</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2"
-                    disabled={disabled}
-                  >
-                    {weatherOptions.map((option) => (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`night-${option.value}`}
-                          className="peer sr-only"
-                          disabled={disabled}
-                        />
-                        <Label
-                          htmlFor={`night-${option.value}`}
-                          className="flex flex-col items-center justify-center p-2 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary-50"
-                        >
-                          <option.icon className={`h-6 w-6 ${option.value === "sunny" ? "text-amber-500" : option.value === "cloudy" ? "text-slate-400" : option.value === "rainy" ? "text-blue-500" : option.value === "clear" ? "text-slate-800" : "text-slate-500"}`} />
-                          <span className="mt-1 text-xs">{option.label}</span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="weatherNightNotes"
-            render={({ field }) => (
-              <FormItem className="mt-2">
-                <FormControl>
-                  <Input 
-                    placeholder="Observações (opcional)" 
-                    {...field}
-                    disabled={disabled}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-      </div>
-
-      <FormField
-        control={control}
-        name="weatherNotes"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Observações Gerais</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="Observações gerais sobre o clima (opcional)" 
-                {...field}
-                disabled={disabled}
+    <Card>
+      <CardContent className="pt-6">
+        <h3 className="text-lg font-medium leading-6 text-slate-900 mb-4">Condições Climáticas</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Morning */}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Manhã</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+              <WeatherOption
+                id="morning-sunny"
+                name="weatherMorning"
+                type="sunny"
+                label="Ensolarado"
+                checked={weatherData.weatherMorning === "sunny"}
+                onChange={() => handleWeatherChange("weatherMorning", "sunny")}
               />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-    </div>
+              
+              <WeatherOption
+                id="morning-cloudy"
+                name="weatherMorning"
+                type="cloudy"
+                label="Nublado"
+                checked={weatherData.weatherMorning === "cloudy"}
+                onChange={() => handleWeatherChange("weatherMorning", "cloudy")}
+              />
+              
+              <WeatherOption
+                id="morning-rainy"
+                name="weatherMorning"
+                type="rainy"
+                label="Chuvoso"
+                checked={weatherData.weatherMorning === "rainy"}
+                onChange={() => handleWeatherChange("weatherMorning", "rainy")}
+              />
+              
+              <WeatherOption
+                id="morning-windy"
+                name="weatherMorning"
+                type="windy"
+                label="Ventoso"
+                checked={weatherData.weatherMorning === "windy"}
+                onChange={() => handleWeatherChange("weatherMorning", "windy")}
+              />
+            </div>
+          </div>
+          
+          {/* Afternoon */}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Tarde</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+              <WeatherOption
+                id="afternoon-sunny"
+                name="weatherAfternoon"
+                type="sunny"
+                label="Ensolarado"
+                checked={weatherData.weatherAfternoon === "sunny"}
+                onChange={() => handleWeatherChange("weatherAfternoon", "sunny")}
+              />
+              
+              <WeatherOption
+                id="afternoon-cloudy"
+                name="weatherAfternoon"
+                type="cloudy"
+                label="Nublado"
+                checked={weatherData.weatherAfternoon === "cloudy"}
+                onChange={() => handleWeatherChange("weatherAfternoon", "cloudy")}
+              />
+              
+              <WeatherOption
+                id="afternoon-rainy"
+                name="weatherAfternoon"
+                type="rainy"
+                label="Chuvoso"
+                checked={weatherData.weatherAfternoon === "rainy"}
+                onChange={() => handleWeatherChange("weatherAfternoon", "rainy")}
+              />
+              
+              <WeatherOption
+                id="afternoon-windy"
+                name="weatherAfternoon"
+                type="windy"
+                label="Ventoso"
+                checked={weatherData.weatherAfternoon === "windy"}
+                onChange={() => handleWeatherChange("weatherAfternoon", "windy")}
+              />
+            </div>
+          </div>
+          
+          {/* Night */}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Noite</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+              <WeatherOption
+                id="night-clear"
+                name="weatherNight"
+                type="clear"
+                label="Limpo"
+                checked={weatherData.weatherNight === "clear"}
+                onChange={() => handleWeatherChange("weatherNight", "clear")}
+              />
+              
+              <WeatherOption
+                id="night-cloudy"
+                name="weatherNight"
+                type="cloudy"
+                label="Nublado"
+                checked={weatherData.weatherNight === "cloudy"}
+                onChange={() => handleWeatherChange("weatherNight", "cloudy")}
+              />
+              
+              <WeatherOption
+                id="night-rainy"
+                name="weatherNight"
+                type="rainy"
+                label="Chuvoso"
+                checked={weatherData.weatherNight === "rainy"}
+                onChange={() => handleWeatherChange("weatherNight", "rainy")}
+              />
+              
+              <WeatherOption
+                id="night-windy"
+                name="weatherNight"
+                type="windy"
+                label="Ventoso"
+                checked={weatherData.weatherNight === "windy"}
+                onChange={() => handleWeatherChange("weatherNight", "windy")}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4">
+          <label htmlFor="obs-clima" className="block text-sm font-medium text-slate-700 mb-1">
+            Observações Climáticas
+          </label>
+          <Textarea
+            id="obs-clima"
+            placeholder="Descreva condições climáticas relevantes..."
+            rows={2}
+            value={weatherData.weatherNotes}
+            onChange={handleNotesChange}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

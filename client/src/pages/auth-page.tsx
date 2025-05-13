@@ -1,389 +1,304 @@
-import { useState } from 'react';
-import { useLocation, useRoute } from 'wouter';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Building, HardHat } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertUserSchema } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Building2, LucideBuilding } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Redirect } from "wouter";
 
+// Extend the insertUserSchema for login form
 const loginSchema = z.object({
-  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  username: z.string().email({ message: "Digite um e-mail válido" }),
+  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" }),
+  rememberMe: z.boolean().optional(),
 });
 
-const registerSchema = z.object({
-  name: z.string().min(3, "Nome completo é obrigatório"),
-  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string(),
-  companyName: z.string().optional(),
-  role: z.string().min(1, "Função é obrigatória")
+// Extend the insertUserSchema for registration
+const registerSchema = insertUserSchema.extend({
+  name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+  confirmPassword: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" }),
+  jobTitle: z.string().min(2, { message: "Cargo é obrigatório" }),
+  company: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não conferem",
+  message: "As senhas não coincidem",
   path: ["confirmPassword"],
 });
 
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<string>("login");
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const { user, loginMutation, registerMutation } = useAuth();
-  const [_, setLocation] = useLocation();
-  
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
 
   // Login form
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
       password: "",
+      rememberMe: false,
     },
   });
 
   // Register form
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
+  const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
       username: "",
-      email: "",
       password: "",
       confirmPassword: "",
-      companyName: "",
-      role: "",
+      jobTitle: "",
+      company: "",
     },
   });
 
-  // Handle form submissions
-  const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
-    loginMutation.mutate(values);
+  const onLoginSubmit = (data: LoginFormValues) => {
+    loginMutation.mutate({
+      username: data.username,
+      password: data.password,
+    });
   };
 
-  const onRegisterSubmit = (values: z.infer<typeof registerSchema>) => {
-    const { confirmPassword, ...registrationData } = values;
-    registerMutation.mutate(registrationData);
+  const onRegisterSubmit = (data: RegisterFormValues) => {
+    registerMutation.mutate({
+      name: data.name,
+      username: data.username,
+      password: data.password,
+      jobTitle: data.jobTitle,
+      company: data.company || "",
+    });
   };
+
+  // Redirect if already logged in
+  if (user) {
+    return <Redirect to="/" />;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-100">
-      <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
-        <div className="flex flex-col sm:flex-row shadow-xl rounded-lg overflow-hidden">
-          {/* Hero section */}
-          <div className="hidden sm:block w-1/2 bg-primary text-white p-8 relative">
-            <div className="absolute inset-0 bg-blue-900/30 mix-blend-multiply"></div>
-            <div className="relative z-10">
-              <div className="flex justify-start mb-8">
-                <span className="bg-white text-primary p-3 rounded-lg">
-                  <Building className="h-12 w-12" />
-                </span>
-              </div>
-              <h2 className="text-3xl font-bold mb-4">Meu Diário de Obra Pro</h2>
-              <p className="text-lg mb-6">
-                A melhor ferramenta para gerenciamento de obras no Brasil
-              </p>
-              
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <HardHat className="h-5 w-5 mr-2" />
-                  <span>Gerencie múltiplos projetos de obras</span>
-                </li>
-                <li className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span>Crie relatórios diários detalhados (RDOs)</span>
-                </li>
-                <li className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>Registre atividades com fotos</span>
-                </li>
-                <li className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Reporte ocorrências e problemas</span>
-                </li>
-                <li className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span>Gere PDFs profissionais</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          {/* Authentication forms */}
-          <div className="w-full sm:w-1/2 bg-white p-8">
-            <div className="flex justify-center sm:hidden mb-6">
-              <span className="bg-primary text-white p-3 rounded-lg">
-                <Building className="h-10 w-10" />
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold mb-6 text-center text-slate-800 sm:hidden">
-              Meu Diário de Obra Pro
-            </h2>
-            
-            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="register">Criar Conta</TabsTrigger>
-              </TabsList>
-              
-              {/* Login Tab */}
-              <TabsContent value="login">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>
-                      Acesse sua conta para gerenciar seus projetos de obra
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...loginForm}>
-                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                        <FormField
-                          control={loginForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome de Usuário</FormLabel>
-                              <FormControl>
-                                <Input placeholder="seu.usuario" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={loginForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Senha</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="remember-me"
-                              className="h-4 w-4 text-primary focus:ring-primary rounded"
-                            />
-                            <Label htmlFor="remember-me" className="text-sm">
-                              Lembrar-me
-                            </Label>
-                          </div>
-                          
-                          <a
-                            href="#"
-                            className="text-sm font-medium text-primary hover:text-primary/90"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            Esqueceu sua senha?
-                          </a>
-                        </div>
-                        
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={loginMutation.isPending}
-                        >
-                          {loginMutation.isPending ? "Entrando..." : "Entrar"}
-                        </Button>
-                        
-                        <div className="text-center mt-4">
-                          <p className="text-sm text-slate-600">
-                            Não tem uma conta?{" "}
-                            <button
-                              type="button"
-                              className="text-primary hover:text-primary/90 font-medium"
-                              onClick={() => setActiveTab("register")}
-                            >
-                              Criar agora
-                            </button>
-                          </p>
-                        </div>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              {/* Register Tab */}
-              <TabsContent value="register">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Criar Conta</CardTitle>
-                    <CardDescription>
-                      Registre-se para começar a gerenciar seus projetos de obra
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...registerForm}>
-                      <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome Completo</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="João Silva" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="username"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Nome de Usuário</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="joao.silva" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={registerForm.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Email</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="joao@empresa.com.br" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Senha</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={registerForm.control}
-                              name="confirmPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Confirmar Senha</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="companyName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome da Empresa (opcional)</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Construtora Exemplo Ltda." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="role"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Função</FormLabel>
-                                <FormControl>
-                                  <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    {...field}
-                                  >
-                                    <option value="">Selecione sua função</option>
-                                    <option value="engineer">Engenheiro</option>
-                                    <option value="architect">Arquiteto</option>
-                                    <option value="foreman">Mestre de Obras</option>
-                                    <option value="technician">Técnico</option>
-                                    <option value="manager">Gerente</option>
-                                    <option value="other">Outro</option>
-                                  </select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={registerMutation.isPending}
-                        >
-                          {registerMutation.isPending ? "Criando conta..." : "Criar Conta"}
-                        </Button>
-                        
-                        <div className="text-center mt-4">
-                          <p className="text-sm text-slate-600">
-                            Já tem uma conta?{" "}
-                            <button
-                              type="button"
-                              className="text-primary hover:text-primary/90 font-medium"
-                              onClick={() => setActiveTab("login")}
-                            >
-                              Faça login
-                            </button>
-                          </p>
-                        </div>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+    <div className="min-h-screen flex flex-col justify-center py-12 bg-slate-100 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
+        <div className="flex justify-center">
+          <div className="bg-primary text-white p-3 rounded-lg">
+            <Building2 className="h-12 w-12" />
           </div>
         </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-800">
+          Meu Diário de Obra Pro
+        </h2>
+        <p className="mt-2 text-center text-sm text-slate-600">
+          A melhor ferramenta para gerenciamento de obras
+        </p>
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <Tabs defaultValue="login" value={authTab} onValueChange={(v) => setAuthTab(v as "login" | "register")}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="login">Entrar</TabsTrigger>
+            <TabsTrigger value="register">Criar Conta</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="login">
+            <Card>
+              <CardHeader>
+                <CardTitle>Acesse sua conta</CardTitle>
+                <CardDescription>
+                  Entre com seu e-mail e senha para acessar o sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="seu@email.com.br" {...field} type="email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input placeholder="••••••••" {...field} type="password" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex items-center justify-between">
+                      <FormField
+                        control={loginForm.control}
+                        name="rememberMe"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Lembrar-me</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button variant="link" className="text-sm font-medium text-primary px-0">
+                        Esqueceu sua senha?
+                      </Button>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={loginMutation.isPending}
+                    >
+                      {loginMutation.isPending ? "Entrando..." : "Entrar"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="register">
+            <Card>
+              <CardHeader>
+                <CardTitle>Crie sua conta</CardTitle>
+                <CardDescription>
+                  Preencha os dados abaixo para criar uma nova conta.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome Completo</FormLabel>
+                          <FormControl>
+                            <Input placeholder="João Silva" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="seu@email.com.br" {...field} type="email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={registerForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input placeholder="••••••••" {...field} type="password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirmar Senha</FormLabel>
+                            <FormControl>
+                              <Input placeholder="••••••••" {...field} type="password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="jobTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cargo</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Engenheiro Civil" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Empresa (opcional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Construtora XYZ" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={registerMutation.isPending}
+                    >
+                      {registerMutation.isPending ? "Criando conta..." : "Criar Conta"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

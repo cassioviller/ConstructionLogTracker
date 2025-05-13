@@ -4,25 +4,27 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import { AuthProvider } from "@/hooks/use-auth";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
-import NewRDOPage from "@/pages/new-rdo-page";
-import RDOHistoryPage from "@/pages/rdo-history-page";
-import PhotoGalleryPage from "@/pages/photo-gallery-page";
+import NewRdoPage from "@/pages/new-rdo-page";
+import RdoHistoryPage from "@/pages/rdo-history-page";
+import PhotosPage from "@/pages/photos-page";
 import { ProtectedRoute } from "./lib/protected-route";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
-      <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
-      <ProtectedRoute path="/projects/:id/new-rdo" component={NewRDOPage} />
-      <ProtectedRoute path="/projects/:id/rdos" component={RDOHistoryPage} />
-      <ProtectedRoute path="/projects/:id/photos" component={PhotoGalleryPage} />
+      <ProtectedRoute path="/project/:id" component={ProjectDetailPage} />
+      <ProtectedRoute path="/project/:id/new-rdo" component={NewRdoPage} />
+      <ProtectedRoute path="/project/:id/rdo-history" component={RdoHistoryPage} />
+      <ProtectedRoute path="/photos" component={PhotosPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -31,10 +33,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="light" storageKey="diario-obra-theme">
+        <TooltipProvider>
+          <AuthProvider>
+            <Toaster />
+            <Router />
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

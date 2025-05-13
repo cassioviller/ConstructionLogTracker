@@ -1,260 +1,412 @@
-import { users, projects, rdos, photos, projectMembers } from "@shared/schema";
-import type { User, InsertUser, Project, InsertProject, RDO, InsertRDO, Photo, InsertPhoto, ProjectMember, InsertProjectMember } from "@shared/schema";
+import { 
+  users, User, InsertUser, 
+  projects, Project, InsertProject, 
+  rdos, Rdo, InsertRdo,
+  photos, Photo, InsertPhoto,
+  projectTeam
+} from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { v4 as uuidv4 } from "uuid";
 
 const MemoryStore = createMemoryStore(session);
 
+// Define interfaces for pagination and filtering
+interface PaginationOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  month?: string;
+}
+
+interface PhotoFilterOptions {
+  projectId?: number;
+  search?: string;
+}
+
 export interface IStorage {
-  // Session store
-  sessionStore: session.SessionStore;
-  
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUserLogo(id: number, logoPath: string): Promise<User>;
   
   // Projects
   getProjects(userId: number): Promise<Project[]>;
   getProject(id: number): Promise<Project | undefined>;
-  createProject(project: InsertProject): Promise<Project>;
-  updateProject(id: number, project: InsertProject): Promise<Project | undefined>;
+  createProject(project: InsertProject & { createdBy: number }): Promise<Project>;
   
   // RDOs
-  getRdosByProject(projectId: number): Promise<RDO[]>;
-  getRdo(id: number): Promise<RDO | undefined>;
-  getLastRdoByProject(projectId: number): Promise<RDO | undefined>;
-  createRdo(rdo: InsertRDO): Promise<RDO>;
-  updateRdo(id: number, rdo: InsertRDO): Promise<RDO | undefined>;
+  getRdos(projectId: number, options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }>;
+  getRdo(id: number): Promise<Rdo | undefined>;
+  getNextRdoNumber(projectId: number): Promise<number>;
+  createRdo(rdo: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo>;
   
   // Photos
-  getPhotosByProject(projectId: number): Promise<Photo[]>;
-  getPhotosByRdo(rdoId: number): Promise<Photo[]>;
-  createPhoto(photo: InsertPhoto): Promise<Photo>;
+  getPhotos(options: PhotoFilterOptions): Promise<Photo[]>;
+  createPhoto(photo: InsertPhoto & { createdBy: number }): Promise<Photo>;
   
-  // Project Members
-  getProjectMembers(projectId: number): Promise<(ProjectMember & { user: User })[]>;
-  addProjectMember(member: InsertProjectMember): Promise<ProjectMember>;
+  // Stats
+  getStats(userId: number): Promise<any>;
+  getRecentReports(userId: number): Promise<any[]>;
+  
+  // Session store
+  sessionStore: session.SessionStore;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private projects: Map<number, Project>;
-  private rdos: Map<number, RDO>;
+  private rdos: Map<number, Rdo>;
   private photos: Map<number, Photo>;
-  private projectMembers: Map<number, ProjectMember>;
-  sessionStore: session.SessionStore;
-  
+  private teams: Map<number, any[]>;
   private userIdCounter: number;
   private projectIdCounter: number;
   private rdoIdCounter: number;
   private photoIdCounter: number;
-  private projectMemberIdCounter: number;
-  
+  sessionStore: session.SessionStore;
+
   constructor() {
     this.users = new Map();
     this.projects = new Map();
     this.rdos = new Map();
     this.photos = new Map();
-    this.projectMembers = new Map();
-    
+    this.teams = new Map();
     this.userIdCounter = 1;
     this.projectIdCounter = 1;
     this.rdoIdCounter = 1;
     this.photoIdCounter = 1;
-    this.projectMemberIdCounter = 1;
-    
     this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24 hours
+      checkPeriod: 86400000 // 24 hours
     });
-
-    // Add demo data
-    this.createInitialData();
+    
+    // Add a sample user for development
+    this.createUser({
+      username: "admin@example.com",
+      password: "$2b$10$GvU2Zfws.aYthRqwrZKPnuOnjpO7WuB33nPLd1.ZMjyP5XvlV4tVa", // "password"
+      name: "Administrador",
+      jobTitle: "Engenheiro Civil",
+      company: "Construtora XYZ"
+    });
   }
-  
+
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.username === username
     );
   }
-  
-  async createUser(insertUser: InsertUser): Promise<User> {
+
+  async createUser(userData: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const now = new Date();
+    const user: User = { ...userData, id, createdAt: now };
     this.users.set(id, user);
     return user;
   }
-  
-  async updateUserLogo(id: number, logoPath: string): Promise<User> {
-    const user = this.users.get(id);
-    if (!user) {
-      throw new Error("Usuário não encontrado");
-    }
-    
-    const updatedUser = { ...user, companyLogo: logoPath };
-    this.users.set(id, updatedUser);
-    return updatedUser;
-  }
-  
+
+  // Project methods
   async getProjects(userId: number): Promise<Project[]> {
-    return Array.from(this.projects.values()).filter(
-      (project) => project.userId === userId,
-    );
-  }
-  
-  async getProject(id: number): Promise<Project | undefined> {
-    return this.projects.get(id);
-  }
-  
-  async createProject(project: InsertProject): Promise<Project> {
-    const id = this.projectIdCounter++;
-    const newProject: Project = { ...project, id, createdAt: new Date() };
-    this.projects.set(id, newProject);
-    return newProject;
-  }
-  
-  async updateProject(id: number, project: InsertProject): Promise<Project | undefined> {
-    const existingProject = this.projects.get(id);
-    if (!existingProject) {
-      return undefined;
-    }
-    
-    const updatedProject = { ...existingProject, ...project };
-    this.projects.set(id, updatedProject);
-    return updatedProject;
-  }
-  
-  async getRdosByProject(projectId: number): Promise<RDO[]> {
-    return Array.from(this.rdos.values())
-      .filter((rdo) => rdo.projectId === projectId)
-      .sort((a, b) => b.reportNumber - a.reportNumber);
-  }
-  
-  async getRdo(id: number): Promise<RDO | undefined> {
-    return this.rdos.get(id);
-  }
-  
-  async getLastRdoByProject(projectId: number): Promise<RDO | undefined> {
-    const projectRdos = Array.from(this.rdos.values())
-      .filter((rdo) => rdo.projectId === projectId)
-      .sort((a, b) => b.reportNumber - a.reportNumber);
-    
-    return projectRdos.length > 0 ? projectRdos[0] : undefined;
-  }
-  
-  async createRdo(rdo: InsertRDO): Promise<RDO> {
-    const id = this.rdoIdCounter++;
-    const newRdo: RDO = { ...rdo, id, createdAt: new Date() };
-    this.rdos.set(id, newRdo);
-    return newRdo;
-  }
-  
-  async updateRdo(id: number, rdo: InsertRDO): Promise<RDO | undefined> {
-    const existingRdo = this.rdos.get(id);
-    if (!existingRdo) {
-      return undefined;
-    }
-    
-    const updatedRdo = { ...existingRdo, ...rdo };
-    this.rdos.set(id, updatedRdo);
-    return updatedRdo;
-  }
-  
-  async getPhotosByProject(projectId: number): Promise<Photo[]> {
-    return Array.from(this.photos.values())
-      .filter((photo) => photo.projectId === projectId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-  
-  async getPhotosByRdo(rdoId: number): Promise<Photo[]> {
-    return Array.from(this.photos.values())
-      .filter((photo) => photo.rdoId === rdoId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-  
-  async createPhoto(photo: InsertPhoto): Promise<Photo> {
-    const id = this.photoIdCounter++;
-    const newPhoto: Photo = { ...photo, id, createdAt: new Date() };
-    this.photos.set(id, newPhoto);
-    return newPhoto;
-  }
-  
-  async getProjectMembers(projectId: number): Promise<(ProjectMember & { user: User })[]> {
-    return Array.from(this.projectMembers.values())
-      .filter((member) => member.projectId === projectId)
-      .map((member) => {
-        const user = this.users.get(member.userId);
-        if (!user) {
-          throw new Error("Usuário não encontrado");
-        }
-        return { ...member, user };
+    return Array.from(this.projects.values())
+      .filter(project => project.createdBy === userId || this.isUserInProject(userId, project.id))
+      .map(project => {
+        const rdoCount = Array.from(this.rdos.values())
+          .filter(rdo => rdo.projectId === project.id)
+          .length;
+          
+        const photoCount = Array.from(this.photos.values())
+          .filter(photo => {
+            const rdo = this.rdos.get(photo.rdoId);
+            return rdo && rdo.projectId === project.id;
+          })
+          .length;
+          
+        return {
+          ...project,
+          reportCount: rdoCount,
+          photoCount: photoCount,
+          team: this.getProjectTeam(project.id)
+        };
       });
   }
-  
-  async addProjectMember(member: InsertProjectMember): Promise<ProjectMember> {
-    const id = this.projectMemberIdCounter++;
-    const newMember: ProjectMember = { ...member, id, createdAt: new Date() };
-    this.projectMembers.set(id, newMember);
-    return newMember;
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const project = this.projects.get(id);
+    if (!project) return undefined;
+    
+    const rdoCount = Array.from(this.rdos.values())
+      .filter(rdo => rdo.projectId === id)
+      .length;
+      
+    const photoCount = Array.from(this.photos.values())
+      .filter(photo => {
+        const rdo = this.rdos.get(photo.rdoId);
+        return rdo && rdo.projectId === id;
+      })
+      .length;
+    
+    return {
+      ...project,
+      reportCount: rdoCount,
+      photoCount: photoCount,
+      team: this.getProjectTeam(id)
+    };
   }
 
-  private createInitialData() {
-    // Create a demo user
-    const demoUser: InsertUser = {
-      username: "demo",
-      password: "$2b$10$IfYMj1wVVBaYxV7Wv9QbJOw6L5DHYCeS0KCX7HDjXuVSXIqTB7LBK", // "password"
-      name: "João Silva",
-      email: "joao@construtoraexemplo.com.br",
-      role: "Engenheiro",
+  async createProject(projectData: InsertProject & { createdBy: number }): Promise<Project> {
+    const id = this.projectIdCounter++;
+    const now = new Date();
+    const project: Project = {
+      ...projectData,
+      id,
+      status: "inProgress",
+      createdAt: now
     };
-    const user = this.createUser(demoUser);
+    this.projects.set(id, project);
+    return project;
+  }
 
-    // Create demo projects
-    const projects = [
-      {
-        name: "Edifício Corporativo Central",
-        client: "Empresa ABC Ltda.",
-        location: "São Paulo, SP",
-        description: "Construção de edifício comercial de 10 andares com garagem subterrânea.",
-        status: "active",
-        startDate: new Date("2023-03-15"),
-        endDate: new Date("2024-10-20"),
-        progress: 65,
-        userId: user.id,
-      },
-      {
-        name: "Condomínio Residencial Parque das Flores",
-        client: "Construtora XYZ",
-        location: "Rio de Janeiro, RJ",
-        description: "Conjunto de 5 torres residenciais com área de lazer completa.",
-        status: "active",
-        startDate: new Date("2023-05-10"),
-        endDate: new Date("2024-12-15"),
-        progress: 28,
-        userId: user.id,
-      },
-      {
-        name: "Ponte Metálica Rio Verde",
-        client: "Prefeitura Municipal",
-        location: "Curitiba, PR",
-        description: "Construção de ponte metálica com 120m de extensão.",
-        status: "paused",
-        startDate: new Date("2023-01-20"),
-        endDate: new Date("2024-04-30"),
-        progress: 42,
-        userId: user.id,
-      }
-    ];
+  // Helper methods for projects
+  private isUserInProject(userId: number, projectId: number): boolean {
+    const team = this.teams.get(projectId) || [];
+    return team.some(member => member.userId === userId);
+  }
 
-    projects.forEach((project) => {
-      this.createProject(project);
+  private getProjectTeam(projectId: number): any[] {
+    return (this.teams.get(projectId) || []).map(member => {
+      const user = this.users.get(member.userId);
+      if (!user) return null;
+      return {
+        id: member.userId,
+        name: user.name,
+        jobTitle: user.jobTitle
+      };
+    }).filter(Boolean);
+  }
+
+  // RDO methods
+  async getRdos(projectId: number, options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }> {
+    const { page = 1, limit = 10, search, month } = options;
+    
+    let rdos = Array.from(this.rdos.values())
+      .filter(rdo => rdo.projectId === projectId);
+    
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      rdos = rdos.filter(rdo => {
+        // Search in activities and occurrences
+        const activitiesText = JSON.stringify(rdo.activities).toLowerCase();
+        const occurrencesText = JSON.stringify(rdo.occurrences).toLowerCase();
+        return activitiesText.includes(searchLower) || occurrencesText.includes(searchLower);
+      });
+    }
+    
+    // Apply month filter if provided
+    if (month) {
+      const monthNumber = parseInt(month);
+      rdos = rdos.filter(rdo => {
+        const rdoDate = new Date(rdo.date);
+        return rdoDate.getMonth() + 1 === monthNumber;
+      });
+    }
+    
+    // Sort by date and number, most recent first
+    rdos.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      return b.number - a.number;
     });
+    
+    const total = rdos.length;
+    const totalPages = Math.ceil(total / limit);
+    
+    // Paginate results
+    const startIndex = (page - 1) * limit;
+    const paginatedRdos = rdos.slice(startIndex, startIndex + limit);
+    
+    // Add responsible info to each RDO
+    const itemsWithResponsible = paginatedRdos.map(rdo => {
+      const user = rdo.createdBy ? this.users.get(rdo.createdBy) : undefined;
+      return {
+        ...rdo,
+        responsible: user ? {
+          id: user.id,
+          name: user.name,
+          jobTitle: user.jobTitle
+        } : undefined,
+        workforceCount: Array.isArray(rdo.workforce) ? rdo.workforce.length : 0
+      };
+    });
+    
+    return {
+      items: itemsWithResponsible,
+      total,
+      totalPages
+    };
+  }
+
+  async getRdo(id: number): Promise<Rdo | undefined> {
+    const rdo = this.rdos.get(id);
+    if (!rdo) return undefined;
+    
+    const user = rdo.createdBy ? this.users.get(rdo.createdBy) : undefined;
+    const project = this.projects.get(rdo.projectId);
+    
+    return {
+      ...rdo,
+      responsible: user ? {
+        id: user.id,
+        name: user.name,
+        jobTitle: user.jobTitle
+      } : undefined,
+      projectName: project?.name
+    };
+  }
+
+  async getNextRdoNumber(projectId: number): Promise<number> {
+    const projectRdos = Array.from(this.rdos.values())
+      .filter(rdo => rdo.projectId === projectId);
+    
+    if (projectRdos.length === 0) return 1;
+    
+    const maxNumber = Math.max(...projectRdos.map(rdo => rdo.number));
+    return maxNumber + 1;
+  }
+
+  async createRdo(rdoData: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo> {
+    const id = this.rdoIdCounter++;
+    const now = new Date();
+    const rdo: Rdo = {
+      ...rdoData,
+      id,
+      createdAt: now
+    };
+    this.rdos.set(id, rdo);
+    return rdo;
+  }
+
+  // Photo methods
+  async getPhotos(options: PhotoFilterOptions): Promise<Photo[]> {
+    const { projectId, search } = options;
+    
+    let photos = Array.from(this.photos.values());
+    
+    // Filter by project if specified
+    if (projectId) {
+      photos = photos.filter(photo => {
+        const rdo = this.rdos.get(photo.rdoId);
+        return rdo && rdo.projectId === projectId;
+      });
+    }
+    
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      photos = photos.filter(photo => {
+        return photo.caption?.toLowerCase().includes(searchLower);
+      });
+    }
+    
+    // Sort by date, most recent first
+    photos.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    // Add project and user info
+    return photos.map(photo => {
+      const rdo = this.rdos.get(photo.rdoId);
+      const project = rdo ? this.projects.get(rdo.projectId) : undefined;
+      const user = photo.createdBy ? this.users.get(photo.createdBy) : undefined;
+      
+      return {
+        ...photo,
+        projectId: rdo?.projectId,
+        projectName: project?.name,
+        userName: user?.name
+      };
+    });
+  }
+
+  async createPhoto(photoData: InsertPhoto & { createdBy: number }): Promise<Photo> {
+    const id = this.photoIdCounter++;
+    const now = new Date();
+    const photo: Photo = {
+      ...photoData,
+      id,
+      createdAt: now
+    };
+    this.photos.set(id, photo);
+    return photo;
+  }
+
+  // Stats methods
+  async getStats(userId: number): Promise<any> {
+    const userProjects = await this.getProjects(userId);
+    const projectIds = userProjects.map(p => p.id);
+    
+    // Count reports
+    const reports = Array.from(this.rdos.values())
+      .filter(rdo => projectIds.includes(rdo.projectId));
+    
+    // Count photos
+    const allPhotos = Array.from(this.photos.values());
+    const photos = allPhotos.filter(photo => {
+      const rdo = this.rdos.get(photo.rdoId);
+      return rdo && projectIds.includes(rdo.projectId);
+    });
+    
+    // New items in last week/month
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const newProjects = userProjects.filter(p => p.createdAt && new Date(p.createdAt) > oneMonthAgo).length;
+    const newReports = reports.filter(r => r.createdAt && new Date(r.createdAt) > oneWeekAgo).length;
+    const newPhotos = photos.filter(p => p.createdAt && new Date(p.createdAt) > oneWeekAgo).length;
+    
+    return {
+      projects: userProjects.length,
+      reports: reports.length,
+      photos: photos.length,
+      newProjects,
+      newReports,
+      newPhotos
+    };
+  }
+
+  async getRecentReports(userId: number): Promise<any[]> {
+    const userProjects = await this.getProjects(userId);
+    const projectIds = userProjects.map(p => p.id);
+    
+    const reports = Array.from(this.rdos.values())
+      .filter(rdo => projectIds.includes(rdo.projectId))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5) // Get most recent 5
+      .map(rdo => {
+        const project = this.projects.get(rdo.projectId);
+        const user = rdo.createdBy ? this.users.get(rdo.createdBy) : undefined;
+        
+        return {
+          id: rdo.id,
+          number: rdo.number,
+          projectId: rdo.projectId,
+          projectName: project?.name,
+          date: rdo.date,
+          status: rdo.status,
+          weatherMorning: rdo.weatherMorning,
+          workforceCount: Array.isArray(rdo.workforce) ? rdo.workforce.length : 0,
+          responsible: user ? {
+            id: user.id,
+            name: user.name
+          } : undefined
+        };
+      });
+    
+    return reports;
   }
 }
 

@@ -38,10 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Login realizado com sucesso",
+        description: `Bem-vindo, ${user.name}!`,
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
+        title: "Falha no login",
         description: error.message,
         variant: "destructive",
       });
@@ -55,10 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Cadastro realizado com sucesso",
+        description: `Bem-vindo, ${user.name}!`,
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
+        title: "Falha no cadastro",
         description: error.message,
         variant: "destructive",
       });
@@ -71,10 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      toast({
+        title: "Logout realizado com sucesso",
+        description: "Você foi desconectado do sistema",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout failed",
+        title: "Falha ao desconectar",
         description: error.message,
         variant: "destructive",
       });

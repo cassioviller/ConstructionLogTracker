@@ -1,364 +1,353 @@
-import { useState } from "react";
-import { Link, useParams, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "wouter";
+import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Building2, FileBarChart, ImageIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileEdit, ChevronLeft } from "lucide-react";
-import NavigationSidebar from "@/components/navigation-sidebar";
-import MobileFooterNav from "@/components/mobile-footer-nav";
-import RDOListItem from "@/components/rdo-list-item";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 
 export default function ProjectDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const [_, navigate] = useLocation();
-  const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
-  
-  // Query to get project details
-  const { data: project, isLoading: isLoadingProject } = useQuery({
+  const { id } = useParams();
+
+  const { data: project, isLoading } = useQuery({
     queryKey: [`/api/projects/${id}`],
-    queryFn: async () => {
-      return {
-        id,
-        name: "Edifício Corporativo Central",
-        client: "Empresa ABC Ltda.",
-        location: "São Paulo, SP",
-        startDate: "2023-03-15",
-        expectedEndDate: "2024-10-20",
-        status: "active",
-        progress: 65,
-        description: "Construção de edifício comercial com 20 andares e 3 subsolos.",
-      };
-    },
-  });
-  
-  // Query to get project RDOs
-  const { data: rdos, isLoading: isLoadingRDOs } = useQuery({
-    queryKey: [`/api/projects/${id}/rdos`],
-    queryFn: async () => {
-      return [];
-    },
-  });
-  
-  // Query to get project photos
-  const { data: photos, isLoading: isLoadingPhotos } = useQuery({
-    queryKey: [`/api/projects/${id}/photos`],
-    queryFn: async () => {
-      return [];
-    },
-  });
-  
-  // Query to get project members
-  const { data: members, isLoading: isLoadingMembers } = useQuery({
-    queryKey: [`/api/projects/${id}/members`],
-    queryFn: async () => {
-      return [];
-    },
   });
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "on_hold":
-        return "bg-amber-100 text-amber-800";
-      case "planning":
-        return "bg-slate-100 text-slate-800";
-      default:
-        return "bg-slate-100 text-slate-800";
-    }
-  };
-  
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active":
-        return "Em andamento";
-      case "completed":
-        return "Concluído";
-      case "on_hold":
-        return "Paralisado";
-      case "planning":
-        return "Planejamento";
-      default:
-        return status;
-    }
-  };
-  
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR').format(date);
-  };
+  const { data: recentReports, isLoading: isReportsLoading } = useQuery({
+    queryKey: [`/api/projects/${id}/reports`],
+  });
 
-  if (isLoadingProject) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <MainLayout>
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!project) {
+    return (
+      <MainLayout>
+        <div className="text-center py-20">
+          <h3 className="text-lg font-medium text-slate-600 mb-2">Projeto não encontrado</h3>
+          <p className="text-slate-500 mb-4">O projeto que você procura não existe ou foi removido</p>
+          <Link href="/projects">
+            <Button>Voltar para Projetos</Button>
+          </Link>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Mobile Header */}
-      <header className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <button 
-          onClick={() => setSidebarOpen(true)} 
-          className="p-2 rounded-md text-slate-500 hover:bg-slate-100"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div className="flex items-center space-x-2">
-          <span className="font-bold text-lg text-primary">Meu Diário de Obra Pro</span>
+    <MainLayout>
+      <div className="flex items-center mb-6">
+        <Link href="/projects" className="inline-flex items-center text-slate-500 hover:text-primary transition-colors mr-3">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">{project.name}</h1>
+          <p className="text-slate-500">{project.client} • {project.location}</p>
         </div>
-      </header>
+      </div>
 
-      <div className="flex flex-1">
-        <NavigationSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-        
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto pb-16 lg:pb-6">
-          <div className="flex items-center mb-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row justify-between items-center pb-2">
+          <CardTitle className="text-lg">Informações do Projeto</CardTitle>
+          <Button variant="outline" size="sm" className="flex items-center">
+            <PencilIcon className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">{project?.name}</h1>
-              <p className="text-slate-500">{project?.client} • {project?.location}</p>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Responsável Técnico</h3>
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs mr-2">
+                  {project.responsible?.name?.charAt(0) || "U"}
+                </div>
+                <span className="text-slate-800">{project.responsible?.name || "Não atribuído"}</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Data de Início</h3>
+              <p className="text-slate-800">{new Date(project.startDate).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Previsão de Término</h3>
+              <p className="text-slate-800">{new Date(project.endDate).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Cliente</h3>
+              <p className="text-slate-800">{project.client}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Endereço</h3>
+              <p className="text-slate-800">{project.location}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 mb-1">Status</h3>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Em andamento</span>
             </div>
           </div>
-          
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg">Informações do Projeto</CardTitle>
-              <Button variant="outline" size="sm">
-                <FileEdit className="h-4 w-4 mr-2" />
-                Editar
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-slate-800">Relatórios (RDOs)</h2>
+              <Link href={`/project/${id}/new-rdo`}>
+                <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
+                  Novo RDO
+                </Button>
+              </Link>
+            </div>
+            <div className="text-center py-6">
+              <span className="text-4xl font-bold text-slate-800">{project.reportCount || 0}</span>
+              <p className="text-slate-500">RDOs criados</p>
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <Link href={`/project/${id}/rdo-history`}>
+                <Button variant="ghost" className="w-full justify-between">
+                  <span>Ver todos os relatórios</span>
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-slate-800">Galeria</h2>
+              <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
+                Ver todas
               </Button>
-            </CardHeader>
-            <CardContent className="pt-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Responsável Técnico</h3>
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs mr-2">
-                      {user?.name?.split(" ").map(n => n[0]).join("").toUpperCase() || "JS"}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <img
+                src="https://images.unsplash.com/photo-1583806999637-30509e2df2b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
+                alt="Fundação em progresso"
+                className="rounded-md h-16 w-full object-cover"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
+                alt="Soldagem da estrutura metálica"
+                className="rounded-md h-16 w-full object-cover"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1578530332818-6ba472e67b9f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
+                alt="Concretagem do segundo pavimento"
+                className="rounded-md h-16 w-full object-cover"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1621155346337-1d19476ba7d6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=200"
+                alt="Vista geral da obra"
+                className="rounded-md h-16 w-full object-cover"
+              />
+              <img
+                src="https://pixabay.com/get/g659fc68ce6676cec6054a49737c2d5bf28b7594cc5a84fbdd3673de1d1b3e3b90b637dff941d0c95766e95ba9af380d97a93b70729b7c0aacb615a57e97cd6ae_1280.jpg"
+                alt="Trabalho interno de estruturação"
+                className="rounded-md h-16 w-full object-cover"
+              />
+              <div className="relative h-16 rounded-md bg-slate-100 flex items-center justify-center">
+                <span className="text-slate-500 font-medium">+{project.photoCount || 0}</span>
+              </div>
+            </div>
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <Button variant="ghost" className="w-full justify-between">
+                <span>Adicionar fotos</span>
+                <PlusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-slate-800">Equipe</h2>
+              <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
+                Gerenciar
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {project.team && project.team.length > 0 ? (
+                project.team.map((member) => (
+                  <div key={member.id} className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">
+                      {member.name?.charAt(0) || "U"}
                     </div>
-                    <span className="text-slate-800">{user?.name || "João Silva"}</span>
+                    <div>
+                      <h3 className="text-sm font-medium text-slate-800">{member.name}</h3>
+                      <p className="text-xs text-slate-500">{member.jobTitle}</p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-slate-500">
+                  Nenhum membro na equipe
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Data de Início</h3>
-                  <p className="text-slate-800">{formatDate(project?.startDate)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Previsão de Término</h3>
-                  <p className="text-slate-800">{formatDate(project?.expectedEndDate)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Cliente</h3>
-                  <p className="text-slate-800">{project?.client}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Endereço</h3>
-                  <p className="text-slate-800">{project?.location}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-500 mb-1">Status</h3>
-                  <Badge 
-                    variant="outline" 
-                    className={`${getStatusBadgeColor(project?.status)}`}
-                  >
-                    {getStatusText(project?.status)}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-slate-700">Progresso</h3>
-                  <span className="text-sm font-medium text-slate-700">{project?.progress}%</span>
-                </div>
-                <Progress value={project?.progress} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="w-full border-b border-slate-200 bg-transparent px-0">
-              <TabsTrigger value="overview" className="data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4">
-                Visão Geral
-              </TabsTrigger>
-              <TabsTrigger value="rdos" className="data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4">
-                Relatórios (RDOs)
-              </TabsTrigger>
-              <TabsTrigger value="photos" className="data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4">
-                Galeria de Fotos
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="pt-2 mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="md:col-span-2">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base">Descrição</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-slate-600">
-                      {project?.description || "Nenhuma descrição fornecida."}
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base">Equipe</CardTitle>
-                    <Button variant="ghost" size="sm">
-                      Gerenciar
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingMembers ? (
-                      <div className="flex justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {members && members.length > 0 ? (
-                          members.map((member: any) => (
-                            <div key={member.id} className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">
-                                {member.name.split(" ").map((n: string) => n[0]).join("").toUpperCase()}
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-medium text-slate-800">{member.name}</h3>
-                                <p className="text-xs text-slate-500">{member.role}</p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-center py-4 text-sm text-slate-500">
-                            Nenhum membro na equipe
+              )}
+            </div>
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <Button variant="ghost" className="w-full justify-between">
+                <span>Adicionar membro</span>
+                <PlusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Últimos Relatórios</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isReportsLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      RDO
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Clima
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Funcionários
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="py-3 px-4 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentReports && recentReports.length > 0 ? (
+                    recentReports.map((report) => (
+                      <tr key={report.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4 text-sm font-medium text-slate-900">#{report.number}</td>
+                        <td className="py-3 px-4 text-sm text-slate-500">
+                          {new Date(report.date).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-500">
+                          <div className="flex items-center space-x-1">
+                            {report.weatherMorning === 'sunny' && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 text-amber-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                                />
+                              </svg>
+                            )}
+                            {report.weatherMorning === 'cloudy' && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 text-slate-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                                />
+                              </svg>
+                            )}
+                            {report.weatherMorning === 'rainy' && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 text-blue-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                                />
+                              </svg>
+                            )}
+                            <span>
+                              {report.weatherMorning === 'sunny'
+                                ? 'Ensolarado'
+                                : report.weatherMorning === 'cloudy'
+                                ? 'Nublado'
+                                : report.weatherMorning === 'rainy'
+                                ? 'Chuvoso'
+                                : 'Variado'}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="rdos" className="pt-2 mt-0">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-slate-800">Relatórios Diários de Obra</h2>
-                <Link href={`/projects/${id}/new-rdo`}>
-                  <Button>
-                    Novo RDO
-                  </Button>
-                </Link>
-              </div>
-              
-              <Card>
-                <CardContent className="p-0">
-                  {isLoadingRDOs ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : rdos && rdos.length > 0 ? (
-                    <div className="divide-y divide-slate-200">
-                      {rdos.map((rdo: any) => (
-                        <RDOListItem key={rdo.id} rdo={rdo} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <div className="mx-auto w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhum RDO encontrado</h3>
-                      <p className="text-slate-500 mb-4 max-w-md mx-auto">
-                        Comece a documentar o progresso da sua obra criando um relatório diário.
-                      </p>
-                      <Link href={`/projects/${id}/new-rdo`}>
-                        <Button>
-                          Criar Primeiro RDO
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="photos" className="pt-2 mt-0">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-slate-800">Galeria de Fotos</h2>
-                <Link href={`/projects/${id}/new-rdo`}>
-                  <Button variant="outline">
-                    Adicionar Fotos
-                  </Button>
-                </Link>
-              </div>
-              
-              <Card>
-                <CardContent className="p-6">
-                  {isLoadingPhotos ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : photos && photos.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {photos.map((photo: any) => (
-                        <div key={photo.id} className="relative group rounded-md overflow-hidden">
-                          <div className="aspect-square bg-slate-200 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button size="sm" variant="secondary">
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-500">{report.workforceCount}</td>
+                        <td className="py-3 px-4 text-sm text-slate-500">
+                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                            {report.status === 'completed' ? 'Completo' : 'Pendente'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="link" className="text-primary">
                               Visualizar
                             </Button>
+                            <Button variant="link" className="text-slate-500">
+                              PDF
+                            </Button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        </td>
+                      </tr>
+                    ))
                   ) : (
-                    <div className="py-12 text-center">
-                      <div className="mx-auto w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhuma foto encontrada</h3>
-                      <p className="text-slate-500 mb-4 max-w-md mx-auto">
-                        Adicione fotos ao criar um novo RDO para documentar o progresso da sua obra.
-                      </p>
-                      <Link href={`/projects/${id}/new-rdo`}>
-                        <Button>
-                          Criar RDO com Fotos
-                        </Button>
-                      </Link>
-                    </div>
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-500">
+                        Nenhum relatório encontrado
+                      </td>
+                    </tr>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-      
-      <MobileFooterNav />
-    </div>
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="p-4 border-t border-slate-200 text-center">
+            <Link href={`/project/${id}/rdo-history`}>
+              <Button variant="link" className="text-primary hover:text-blue-700 font-medium">
+                Ver todos os RDOs
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </MainLayout>
   );
 }

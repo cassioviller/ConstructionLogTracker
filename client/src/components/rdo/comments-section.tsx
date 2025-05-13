@@ -1,146 +1,113 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { CommentItem } from "@shared/schema";
-import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { v4 as uuidv4 } from 'uuid';
 
-type CommentsSectionProps = {
-  comments: CommentItem[];
-  onCommentsChange: (comments: CommentItem[]) => void;
-  disabled?: boolean;
-};
+interface CommentsSectionProps {
+  onChange: (comments: CommentItem[]) => void;
+  initialData?: CommentItem[];
+}
 
-export function CommentsSection({ 
-  comments, 
-  onCommentsChange,
-  disabled = false
-}: CommentsSectionProps) {
-  const [newComment, setNewComment] = useState("");
+export function CommentsSection({ onChange, initialData = [] }: CommentsSectionProps) {
+  const [comments, setComments] = useState<CommentItem[]>(initialData);
+  const [commentText, setCommentText] = useState("");
   const { user } = useAuth();
 
   const handleAddComment = () => {
-    if (!newComment.trim() || !user) return;
-    
-    const comment: CommentItem = {
+    if (!commentText.trim()) return;
+
+    if (!user) {
+      // Handle not logged in user
+      return;
+    }
+
+    const newComment: CommentItem = {
       id: uuidv4(),
-      text: newComment.trim(),
-      user: {
+      text: commentText,
+      createdAt: new Date().toISOString(),
+      createdBy: {
         id: user.id,
         name: user.name,
-        role: user.role
-      },
-      createdAt: new Date().toISOString()
+        jobTitle: user.jobTitle || "Usuário"
+      }
     };
-    
-    onCommentsChange([...comments, comment]);
-    setNewComment("");
+
+    const updatedComments = [...comments, newComment];
+    setComments(updatedComments);
+    onChange(updatedComments);
+    setCommentText("");
   };
 
-  // Helper to display user's initials
-  const getUserInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  // Define different background colors for different users
-  const getUserColor = (userId: number) => {
-    const colors = [
-      "bg-primary",
-      "bg-green-500",
-      "bg-amber-500",
-      "bg-purple-500",
-      "bg-red-500",
-      "bg-blue-500"
-    ];
-    
-    return colors[userId % colors.length];
-  };
-
-  // Format date as relative time
-  const getRelativeTime = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const secondsPast = (now.getTime() - date.getTime()) / 1000;
-    
-    if (secondsPast < 60) {
-      return "agora mesmo";
+  const formatCommentDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR });
+    } catch (error) {
+      return "Data desconhecida";
     }
-    if (secondsPast < 3600) {
-      return `${Math.floor(secondsPast / 60)} min atrás`;
-    }
-    if (secondsPast < 86400) {
-      return `${Math.floor(secondsPast / 3600)} horas atrás`;
-    }
-    
-    return formatDate(date);
   };
 
   return (
-    <div>
-      <h3 className="text-lg font-medium leading-6 text-slate-900 mb-3">Comentários</h3>
-
-      <div className="bg-slate-50 p-4 rounded-lg space-y-4">
-        {comments.length > 0 ? (
-          <div className="space-y-3">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex items-start">
-                <div className={`flex-shrink-0 h-8 w-8 rounded-full ${getUserColor(comment.user.id)} flex items-center justify-center text-white text-sm mr-3`}>
-                  {getUserInitials(comment.user.name)}
-                </div>
-                <div className="flex-1 bg-white p-3 rounded-lg border border-slate-200">
-                  <div className="flex justify-between items-center mb-1">
-                    <div>
-                      <span className="font-medium text-slate-800">{comment.user.name}</span>
-                      {comment.user.role && (
-                        <span className="ml-2 text-sm text-slate-500">{comment.user.role}</span>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-500">{getRelativeTime(comment.createdAt)}</span>
-                  </div>
-                  <p className="text-sm text-slate-600 whitespace-pre-line">{comment.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white p-4 rounded-lg text-center border border-slate-200">
-            <p className="text-slate-500">Nenhum comentário ainda. Seja o primeiro a comentar!</p>
-          </div>
-        )}
+    <Card>
+      <CardContent className="pt-6">
+        <h3 className="text-lg font-medium leading-6 text-slate-900 mb-4">Comentários</h3>
         
-        {!disabled && user && (
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-8 w-8 rounded-full ${getUserColor(user.id)} flex items-center justify-center text-white text-sm mr-3`}>
-              {getUserInitials(user.name)}
+        <div className="bg-slate-50 p-4 rounded-lg">
+          {comments.length > 0 && (
+            <div className="space-y-4 mb-4">
+              {comments.map(comment => (
+                <div key={comment.id} className="flex">
+                  <div className="flex-shrink-0 mr-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>{comment.createdBy.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="flex-1 bg-white rounded-lg px-4 py-3 sm:px-6 border border-slate-200">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-sm font-medium text-slate-900">{comment.createdBy.name}</span>
+                        <span className="ml-2 text-sm text-slate-500">{comment.createdBy.jobTitle}</span>
+                      </div>
+                      <span className="text-sm text-slate-500">{formatCommentDate(comment.createdAt)}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700">
+                      <p>{comment.text}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div className="flex">
+            <div className="flex-shrink-0 mr-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
             </div>
             <div className="flex-1">
               <Textarea
+                rows={3}
                 placeholder="Adicione um comentário..."
-                rows={2}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="w-full resize-none"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="focus:ring-primary focus:border-primary"
               />
               <div className="mt-2 flex justify-end">
-                <Button
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim()}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Enviar
+                <Button onClick={handleAddComment} disabled={!commentText.trim()}>
+                  Comentar
                 </Button>
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

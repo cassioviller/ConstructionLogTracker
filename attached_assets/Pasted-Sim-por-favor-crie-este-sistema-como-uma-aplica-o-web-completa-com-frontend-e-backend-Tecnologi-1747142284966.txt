@@ -1,0 +1,31 @@
+Sim, por favor, crie este sistema como uma aplicação web completa com frontend e backend.
+Tecnologias:
+Frontend: Pode usar React. Se tiver uma sugestão melhor que se integre bem com o backend Node.js, estou aberto.
+Backend: Continue com Node.js e utilize Express.js.
+Banco de Dados: Utilizaremos PostgreSQL. A aplicação deve ser configurada para usar a seguinte URL de conexão interna (conforme as credenciais que tenho no meu ambiente EasyPanel): postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
+Deploy:
+O deploy final será realizado no EasyPanel utilizando Docker. Para isso, por favor, gere um Dockerfile otimizado para esta aplicação Node.js. O Dockerfile deve seguir estas diretrizes:
+Utilizar uma imagem base oficial do Node.js (versão LTS estável é preferível).
+Configurar o diretório de trabalho dentro do container.
+Copiar os arquivos package.json e package-lock.json (ou yarn.lock se for o caso).
+Instalar as dependências de produção de forma eficiente (ex: npm ci --only=production).
+Copiar o restante dos arquivos da aplicação para o diretório de trabalho.
+Se o frontend (React) tiver um passo de build, incluir o comando correspondente (ex: npm run build).
+Expor a porta em que a aplicação Node.js (backend/servidor) irá rodar (ex: 3000 ou 8080).
+Definir o comando para iniciar a aplicação em modo de produção (ex: CMD ["npm", "start"] ou CMD ["node", "server.js"]).
+Funcionalidades Chave do Sistema (MVP - Diário de Obra Pro):
+O foco é um sistema robusto e intuitivo de Diário de Obra (RDO) em Português do Brasil.
+Core: Autenticação de usuários, gerenciamento de múltiplas obras.
+Relatório Diário de Obra (RDO) Detalhado:
+Cabeçalho personalizável (Nº RDO, Data, Obra, Cliente, Local, Logo da Empresa).
+Registro de Condições Climáticas (Manhã, Tarde, Noite, com opções e observações).
+Registro de Mão de Obra (Função, Quantidade, Nomes/Observações; opcionalmente horários).
+Registro de Equipamentos (Lista, Quantidade, Horas de Uso/Observações).
+Descrição de Atividades Executadas (com status/ % conclusão).
+Registro de Ocorrências/Eventos (com tags para filtro).
+Upload de múltiplas Fotos e Vídeos (com legendas) por RDO.
+Seção de Comentários Colaborativos por RDO.
+Geração de PDF do RDO (layout profissional, incluindo logo e fotos).
+Geral: Dashboard simplificado por obra (últimos RDOs, fotos), filtros e buscas nos RDOs, interface responsiva.
+Diferencial Importante: Implementar capacidade de preenchimento offline do RDO em campo, com sincronização de dados quando online.
+Por favor, inicie pela modelagem e configuração do banco de dados PostgreSQL, seguido pelas funcionalidades de autenticação e gerenciamento de obras. Após essa base, concentre-se no módulo de criação e visualização do RDO com todas as suas seções. Se precisar de mais detalhes sobre alguma funcionalidade específica, me informe.
