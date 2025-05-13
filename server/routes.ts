@@ -137,6 +137,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para obter fotos de um RDO específico
+  app.get("/api/rdos/:id/photos", requireAuth, async (req, res) => {
+    try {
+      const rdoId = parseInt(req.params.id);
+      const photos = await storage.getPhotosByRdoId(rdoId);
+      res.json(photos);
+    } catch (error) {
+      console.error("Erro ao buscar fotos:", error);
+      res.status(500).json({ message: "Erro ao buscar fotos do RDO" });
+    }
+  });
+  
   app.patch("/api/rdos/:id", requireAuth, async (req, res) => {
     try {
       const rdoId = parseInt(req.params.id);

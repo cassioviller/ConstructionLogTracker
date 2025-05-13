@@ -45,6 +45,7 @@ export interface IStorage {
   
   // Photos
   getPhotos(options: PhotoFilterOptions): Promise<Photo[]>;
+  getPhotosByRdoId(rdoId: number): Promise<Photo[]>;
   createPhoto(photo: InsertPhoto & { createdBy: number }): Promise<Photo>;
   
   // Team Members
@@ -436,6 +437,28 @@ export class MemStorage implements IStorage {
     };
     this.photos.set(id, photo);
     return photo;
+  }
+  
+  /**
+   * Buscar fotos associadas a um RDO específico
+   */
+  async getPhotosByRdoId(rdoId: number): Promise<Photo[]> {
+    const photos = Array.from(this.photos.values())
+      .filter(photo => photo.rdoId === rdoId);
+    
+    // Adicionar informações adicionais
+    return photos.map(photo => {
+      const rdo = this.rdos.get(photo.rdoId);
+      const project = rdo ? this.projects.get(rdo.projectId) : undefined;
+      const user = photo.createdBy ? this.users.get(photo.createdBy) : undefined;
+      
+      return {
+        ...photo,
+        projectId: rdo?.projectId,
+        projectName: project?.name,
+        userName: user?.name
+      };
+    });
   }
 
   // Stats methods
