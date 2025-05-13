@@ -60,6 +60,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/projects/:id", requireAuth, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const projectData = req.body;
+      
+      // Verificar se o projeto existe
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Projeto não encontrado" });
+      }
+      
+      // Verificar se o usuário tem permissão (somente o criador pode editar)
+      if (project.createdBy !== req.user!.id) {
+        return res.status(403).json({ message: "Sem permissão para editar este projeto" });
+      }
+      
+      // Atualizar o projeto
+      const updatedProject = await storage.updateProject(projectId, projectData);
+      res.json(updatedProject);
+    } catch (error) {
+      console.error("Erro ao atualizar projeto:", error);
+      res.status(500).json({ message: "Erro ao atualizar projeto" });
+    }
+  });
+
   // RDO routes
   // Esta rota serve tanto para /reports quanto para /rdos para compatibilidade
   app.get(["/api/projects/:id/reports", "/api/projects/:id/rdos"], requireAuth, async (req, res) => {

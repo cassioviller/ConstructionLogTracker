@@ -176,6 +176,21 @@ export class MemStorage implements IStorage {
       team: this.getProjectTeam(id)
     };
   }
+  
+  async updateProject(id: number, data: Partial<InsertProject>): Promise<Project | undefined> {
+    const project = this.projects.get(id);
+    if (!project) return undefined;
+    
+    const updatedProject = {
+      ...project,
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    this.projects.set(id, updatedProject);
+    
+    return this.getProject(id);
+  }
 
   async createProject(projectData: InsertProject & { createdBy: number }): Promise<Project> {
     const id = this.projectIdCounter++;
@@ -715,6 +730,25 @@ export class DatabaseStorage implements IStorage {
       return project;
     } catch (error) {
       console.error("Erro ao buscar projeto:", error);
+      return undefined;
+    }
+  }
+  
+  async updateProject(id: number, data: Partial<InsertProject>): Promise<Project | undefined> {
+    try {
+      console.log(`Atualizando projeto ID: ${id}`);
+      const [updatedProject] = await db
+        .update(projects)
+        .set({
+          ...data,
+          updatedAt: new Date()
+        })
+        .where(eq(projects.id, id))
+        .returning();
+      console.log(`Projeto atualizado com sucesso: ${updatedProject.name}`);
+      return updatedProject;
+    } catch (error) {
+      console.error("Erro ao atualizar projeto:", error);
       return undefined;
     }
   }
