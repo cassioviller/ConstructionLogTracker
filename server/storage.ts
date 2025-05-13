@@ -622,4 +622,516 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Implementação com PostgreSQL
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
+
+  constructor() {
+    // Configuração para armazenar sessões no PostgreSQL
+    this.sessionStore = new PostgresSessionStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      ttl: 86400000 // 24 horas
+    });
+    
+    console.log("DatabaseStorage inicializado com PostgreSQL");
+    
+    // Verifica se existem usuários e cria um usuário padrão se necessário
+    this.getUserByUsername("admin").then(user => {
+      if (!user) {
+        console.log("Criando usuário admin padrão");
+        this.createUser({
+          username: "admin",
+          password: "password", // Texto plano que será hashado pelo setupAuth
+          name: "Administrador",
+          jobTitle: "Administrador do Sistema",
+          company: "MDOP",
+        }).then(() => {
+          console.log("Usuário padrão criado com sucesso!");
+        });
+      } else {
+        console.log("Usuário admin já existe, pulando criação");
+      }
+    });
+  }
+
+  // Implementação dos métodos da interface IStorage usando PostgreSQL
+  
+  // Usuários
+  async getUser(id: number): Promise<User | undefined> {
+    try {
+      console.log(`Buscando usuário pelo ID: ${id}`);
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+      return undefined;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      console.log(`Buscando usuário pelo username: ${username}`);
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
+    } catch (error) {
+      console.error("Erro ao buscar usuário por username:", error);
+      return undefined;
+    }
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    try {
+      console.log(`Criando novo usuário: ${userData.username}`);
+      const [user] = await db.insert(users).values(userData)
+        .returning();
+      console.log(`Usuário criado com sucesso: ID ${user.id}`);
+      return user;
+    } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      throw error;
+    }
+  }
+
+  // Projetos
+  async getProjects(userId: number): Promise<Project[]> {
+    try {
+      console.log(`Buscando projetos para o usuário ID: ${userId}`);
+      const projectsList = await db.select().from(projects)
+        .where(eq(projects.createdBy, userId))
+        .orderBy(desc(projects.createdAt));
+      return projectsList;
+    } catch (error) {
+      console.error("Erro ao buscar projetos:", error);
+      return [];
+    }
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    try {
+      console.log(`Buscando projeto pelo ID: ${id}`);
+      const [project] = await db.select().from(projects).where(eq(projects.id, id));
+      return project;
+    } catch (error) {
+      console.error("Erro ao buscar projeto:", error);
+      return undefined;
+    }
+  }
+
+  async createProject(projectData: InsertProject & { createdBy: number }): Promise<Project> {
+    try {
+      console.log(`Criando novo projeto: ${projectData.name}`);
+      const [project] = await db.insert(projects).values(projectData)
+        .returning();
+      console.log(`Projeto criado com sucesso: ID ${project.id}`);
+      return project;
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+      throw error;
+    }
+  }
+
+  // RDOs
+  async getRdos(projectId: number, options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }> {
+    try {
+      const page = options.page || 1;
+      const limit = options.limit || 10;
+      const search = options.search;
+      const month = options.month;
+      
+      console.log(`Buscando RDOs para o projeto ${projectId}, página ${page}, limite ${limit}`);
+      
+      // Converter projectId para número para garantir a comparação correta
+      const numericProjectId = Number(projectId);
+      
+      // Construir consulta base
+      let query = db.select().from(rdos).where(eq(rdos.projectId, numericProjectId));
+      
+      // Aplicar filtro de busca se fornecido
+      if (search) {
+        // Implementar busca por número ou conteúdo
+        query = query.where(like(rdos.weatherNotes, `%${search}%`));
+      }
+      
+      // Aplicar filtro de mês se fornecido
+      if (month && month !== 'all') {
+        // Extrai mês da data para filtrar
+        const monthNumber = parseInt(month);
+        // Implementação simplificada - idealmente usar funções SQL específicas do PostgreSQL
+        // para extrair o mês de uma data
+      }
+      
+      // Contar total para paginação
+      const [result] = await db.select({ count: sql`count(*)` }).from(rdos)
+        .where(eq(rdos.projectId, numericProjectId));
+      const total = Number(result.count);
+      const totalPages = Math.ceil(total / limit);
+      
+      // Obter registros com paginação
+      const offset = (page - 1) * limit;
+      const rdosList = await query
+        .orderBy(desc(rdos.date), desc(rdos.number))
+        .limit(limit)
+        .offset(offset);
+      
+      console.log(`Encontrados ${rdosList.length} RDOs para o projeto ${projectId}`);
+      
+      return {
+        items: rdosList,
+        total,
+        totalPages
+      };
+    } catch (error) {
+      console.error("Erro ao buscar RDOs:", error);
+      return {
+        items: [],
+        total: 0,
+        totalPages: 0
+      };
+    }
+  }
+
+  async getAllRdos(options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }> {
+    try {
+      const page = options.page || 1;
+      const limit = options.limit || 10;
+      const search = options.search;
+      const month = options.month;
+      
+      console.log(`Buscando todos os RDOs, página ${page}, limite ${limit}`);
+      
+      // Construir consulta base
+      let query = db.select().from(rdos);
+      
+      // Aplicar filtro de busca se fornecido
+      if (search) {
+        query = query.where(like(rdos.weatherNotes, `%${search}%`));
+      }
+      
+      // Aplicar filtro de mês se fornecido
+      if (month && month !== 'all') {
+        const monthNumber = parseInt(month);
+        // Implementação simplificada
+      }
+      
+      // Contar total para paginação
+      const [result] = await db.select({ count: sql`count(*)` }).from(rdos);
+      const total = Number(result.count);
+      const totalPages = Math.ceil(total / limit);
+      
+      // Obter registros com paginação
+      const offset = (page - 1) * limit;
+      const rdosList = await query
+        .orderBy(desc(rdos.date), desc(rdos.number))
+        .limit(limit)
+        .offset(offset);
+      
+      console.log(`Encontrados ${rdosList.length} RDOs no total`);
+      
+      return {
+        items: rdosList,
+        total,
+        totalPages
+      };
+    } catch (error) {
+      console.error("Erro ao buscar todos os RDOs:", error);
+      return {
+        items: [],
+        total: 0,
+        totalPages: 0
+      };
+    }
+  }
+
+  async getRdo(id: number): Promise<Rdo | undefined> {
+    try {
+      console.log(`Buscando RDO pelo ID: ${id}`);
+      const [rdo] = await db.select().from(rdos).where(eq(rdos.id, id));
+      return rdo;
+    } catch (error) {
+      console.error("Erro ao buscar RDO:", error);
+      return undefined;
+    }
+  }
+
+  async getNextRdoNumber(projectId: number): Promise<number> {
+    try {
+      console.log(`Calculando próximo número de RDO para o projeto ${projectId}`);
+      const [result] = await db.select({ maxNumber: sql`max(number)` })
+        .from(rdos)
+        .where(eq(rdos.projectId, projectId));
+      
+      const maxNumber = result.maxNumber ? Number(result.maxNumber) : 0;
+      return maxNumber + 1;
+    } catch (error) {
+      console.error("Erro ao calcular próximo número de RDO:", error);
+      return 1; // Número padrão caso ocorra erro
+    }
+  }
+
+  async createRdo(rdoData: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo> {
+    try {
+      console.log(`Criando novo RDO: Projeto ${rdoData.projectId}, Número ${rdoData.number}`);
+      
+      // Garantir que projectId seja numérico
+      const projectId = Number(rdoData.projectId);
+      
+      // Criar RDO no banco
+      const [rdo] = await db.insert(rdos).values({
+        ...rdoData,
+        projectId
+      }).returning();
+      
+      console.log(`RDO criado com sucesso: ID ${rdo.id}`);
+      return rdo;
+    } catch (error) {
+      console.error("Erro ao criar RDO:", error);
+      throw error;
+    }
+  }
+
+  async updateRdo(id: number, data: Partial<Rdo>): Promise<Rdo | undefined> {
+    try {
+      console.log(`Atualizando RDO ID: ${id}`);
+      const [rdo] = await db.update(rdos)
+        .set(data)
+        .where(eq(rdos.id, id))
+        .returning();
+      
+      console.log(`RDO atualizado com sucesso: ID ${rdo.id}`);
+      return rdo;
+    } catch (error) {
+      console.error("Erro ao atualizar RDO:", error);
+      return undefined;
+    }
+  }
+
+  getAllRdosForDebug(): Map<number, Rdo> {
+    // Método de debug - apenas para compatibilidade
+    return new Map<number, Rdo>();
+  }
+
+  // Fotos
+  async getPhotos(options: PhotoFilterOptions): Promise<Photo[]> {
+    try {
+      console.log("Buscando fotos");
+      let query = db.select().from(photos);
+      
+      if (options.projectId) {
+        // Para buscar fotos por projeto, precisaríamos juntar com RDOs
+        // Esta é uma implementação simplificada
+        const projectRdos = await db.select({ id: rdos.id })
+          .from(rdos)
+          .where(eq(rdos.projectId, options.projectId));
+        
+        const rdoIds = projectRdos.map(r => r.id);
+        if (rdoIds.length > 0) {
+          // Se houver RDOs neste projeto, buscar suas fotos
+          query = query.where(sql`rdo_id IN (${rdoIds.join(',')})`);
+        } else {
+          // Se não houver RDOs, retornar array vazio
+          return [];
+        }
+      }
+      
+      if (options.search) {
+        query = query.where(like(photos.caption, `%${options.search}%`));
+      }
+      
+      const photosList = await query.orderBy(desc(photos.createdAt));
+      return photosList;
+    } catch (error) {
+      console.error("Erro ao buscar fotos:", error);
+      return [];
+    }
+  }
+
+  async getPhotosByRdoId(rdoId: number): Promise<Photo[]> {
+    try {
+      console.log(`Buscando fotos para o RDO ID: ${rdoId}`);
+      const photosList = await db.select()
+        .from(photos)
+        .where(eq(photos.rdoId, rdoId))
+        .orderBy(asc(photos.id));
+      
+      return photosList;
+    } catch (error) {
+      console.error("Erro ao buscar fotos do RDO:", error);
+      return [];
+    }
+  }
+
+  async createPhoto(photoData: InsertPhoto & { createdBy: number }): Promise<Photo> {
+    try {
+      console.log(`Salvando nova foto para o RDO ID: ${photoData.rdoId}`);
+      const [photo] = await db.insert(photos).values(photoData).returning();
+      console.log(`Foto salva com sucesso: ID ${photo.id}`);
+      return photo;
+    } catch (error) {
+      console.error("Erro ao salvar foto:", error);
+      throw error;
+    }
+  }
+
+  // Membros da equipe
+  async getTeamMembers(projectId: number): Promise<TeamMember[]> {
+    try {
+      console.log(`Buscando membros da equipe para o projeto ID: ${projectId}`);
+      const teamList = await db.select()
+        .from(teamMembers)
+        .where(eq(teamMembers.projectId, projectId))
+        .orderBy(asc(teamMembers.name));
+      
+      return teamList;
+    } catch (error) {
+      console.error("Erro ao buscar membros da equipe:", error);
+      return [];
+    }
+  }
+
+  async getTeamMember(id: number): Promise<TeamMember | undefined> {
+    try {
+      console.log(`Buscando membro da equipe pelo ID: ${id}`);
+      const [member] = await db.select()
+        .from(teamMembers)
+        .where(eq(teamMembers.id, id));
+      
+      return member;
+    } catch (error) {
+      console.error("Erro ao buscar membro da equipe:", error);
+      return undefined;
+    }
+  }
+
+  async createTeamMember(memberData: InsertTeamMember & { createdBy: number }): Promise<TeamMember> {
+    try {
+      console.log(`Criando novo membro de equipe: ${memberData.name}`);
+      const [member] = await db.insert(teamMembers)
+        .values(memberData)
+        .returning();
+      
+      console.log(`Membro de equipe criado com sucesso: ID ${member.id}`);
+      return member;
+    } catch (error) {
+      console.error("Erro ao criar membro de equipe:", error);
+      throw error;
+    }
+  }
+
+  async updateTeamMember(id: number, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
+    try {
+      console.log(`Atualizando membro de equipe ID: ${id}`);
+      const [member] = await db.update(teamMembers)
+        .set(data)
+        .where(eq(teamMembers.id, id))
+        .returning();
+      
+      console.log(`Membro de equipe atualizado com sucesso: ID ${member.id}`);
+      return member;
+    } catch (error) {
+      console.error("Erro ao atualizar membro de equipe:", error);
+      return undefined;
+    }
+  }
+
+  async deleteTeamMember(id: number): Promise<boolean> {
+    try {
+      console.log(`Excluindo membro de equipe ID: ${id}`);
+      await db.delete(teamMembers)
+        .where(eq(teamMembers.id, id));
+      
+      console.log(`Membro de equipe excluído com sucesso: ID ${id}`);
+      return true;
+    } catch (error) {
+      console.error("Erro ao excluir membro de equipe:", error);
+      return false;
+    }
+  }
+
+  // Estatísticas
+  async getStats(userId: number): Promise<any> {
+    try {
+      console.log(`Calculando estatísticas para o usuário ID: ${userId}`);
+      
+      // Total de projetos
+      const [projectsCount] = await db.select({ count: sql`count(*)` })
+        .from(projects)
+        .where(eq(projects.createdBy, userId));
+      
+      // Total de RDOs
+      const [rdosCount] = await db.select({ count: sql`count(*)` })
+        .from(rdos)
+        .where(eq(rdos.createdBy, userId));
+      
+      // Total de fotos
+      const [photosCount] = await db.select({ count: sql`count(*)` })
+        .from(photos)
+        .where(eq(photos.createdBy, userId));
+      
+      // Projetos novos (últimos 30 dias)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const [newProjectsCount] = await db.select({ count: sql`count(*)` })
+        .from(projects)
+        .where(and(
+          eq(projects.createdBy, userId),
+          sql`created_at >= ${thirtyDaysAgo.toISOString()}`
+        ));
+      
+      return {
+        projects: Number(projectsCount.count),
+        reports: Number(rdosCount.count),
+        photos: Number(photosCount.count),
+        newProjects: Number(newProjectsCount.count)
+      };
+    } catch (error) {
+      console.error("Erro ao calcular estatísticas:", error);
+      return {
+        projects: 0,
+        reports: 0,
+        photos: 0,
+        newProjects: 0
+      };
+    }
+  }
+
+  async getRecentReports(userId: number): Promise<any[]> {
+    try {
+      console.log(`Buscando relatórios recentes para o usuário ID: ${userId}`);
+      
+      // Buscar RDOs recentes
+      const recentRdos = await db.select({
+        id: rdos.id,
+        number: rdos.number,
+        date: rdos.date,
+        projectId: rdos.projectId,
+        status: rdos.status
+      })
+      .from(rdos)
+      .where(eq(rdos.createdBy, userId))
+      .orderBy(desc(rdos.date))
+      .limit(5);
+      
+      // Para cada RDO, buscar o nome do projeto
+      const enhancedRdos = await Promise.all(recentRdos.map(async (rdo) => {
+        const [project] = await db.select({ name: projects.name })
+          .from(projects)
+          .where(eq(projects.id, rdo.projectId));
+        
+        return {
+          ...rdo,
+          projectName: project ? project.name : 'Projeto desconhecido'
+        };
+      }));
+      
+      return enhancedRdos;
+    } catch (error) {
+      console.error("Erro ao buscar relatórios recentes:", error);
+      return [];
+    }
+  }
+}
+
+// Exportar a instância DatabaseStorage para uso em toda a aplicação
+export const storage = new DatabaseStorage();
