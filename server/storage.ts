@@ -906,9 +906,22 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  getAllRdosForDebug(): Map<number, Rdo> {
-    // Método de debug - apenas para compatibilidade
-    return new Map<number, Rdo>();
+  async getAllRdosForDebug(): Promise<Map<number, Rdo>> {
+    try {
+      // Carregar todos os RDOs para debug
+      const allRdos = await db.select().from(rdos);
+      const resultMap = new Map<number, Rdo>();
+      
+      allRdos.forEach(rdo => {
+        resultMap.set(rdo.id, rdo);
+      });
+      
+      console.log(`Carregados ${resultMap.size} RDOs para debug`);
+      return resultMap;
+    } catch (error) {
+      console.error("Erro ao carregar RDOs para debug:", error);
+      return new Map<number, Rdo>();
+    }
   }
 
   // Fotos
