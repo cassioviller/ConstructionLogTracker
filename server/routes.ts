@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { generatePdfRdo } from "./pdf";
-import { insertProjectSchema, insertRdoSchema, insertPhotoSchema } from "@shared/schema";
+import { insertProjectSchema, insertRdoSchema, insertPhotoSchema, insertTeamMemberSchema } from "@shared/schema";
 import { z } from "zod";
 
 function requireAuth(req: Request, res: Response, next: Function) {
@@ -192,6 +192,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reports);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar relatórios recentes" });
+    }
+  });
+
+  // Team Members routes
+  app.get("/api/projects/:projectId/team", requireAuth, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Projeto não encontrado" });
+      }
+      
+      const teamMembers = await storage.getTeamMembers(projectId);
+      res.json(teamMembers);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar membros da equipe" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/team", requireAuth, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Projeto não encontrado" });
+      }
+      
+      const memberData = insertTeamMemberSchema.parse({
+        ...req.body,
+        projectId
+      });
+      
+      const member = await storage.createTeamMember({
+        ...memberData,
+        projectId,
+        createdBy: req.user!.id
+      });
+      
+      res.status(201).json(member);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Erro ao criar membro da equipe" });
+    }
+  });
+
+  app.put("/api/team/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const member = await storage.getTeamMember(id);
+      
+      if (!member) {
+        return res.status(404).json({ message: "Membro não encontrado" });
+      }
+      
+      const updatedMember = await storage.updateTeamMember(id, req.body);
+      res.json(updatedMember);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar membro da equipe" });
+    }
+  });
+
+  app.delete("/api/team/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const member = await storage.getTeamMember(id);
+      
+      if (!member) {
+        return res.status(404).json({ message: "Membro não encontrado" });
+      }
+      
+      await storage.deleteTeamMember(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir membro da equipe" });
     }
   });
 

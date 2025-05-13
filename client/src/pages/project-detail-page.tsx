@@ -1,15 +1,39 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2, FileBarChart, ImageIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { ArrowLeft, Building2, FileBarChart, ImageIcon, PencilIcon, PlusIcon, UserPlus, UserIcon, Users, Trash2 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+// Schema para validação do formulário de membro da equipe
+const teamMemberSchema = z.object({
+  name: z.string().min(1, { message: "Nome é obrigatório" }),
+  role: z.string().min(1, { message: "Função é obrigatória" }),
+  company: z.string().optional(),
+  contact: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  const [teamMemberDialogOpen, setTeamMemberDialogOpen] = useState(false);
+  const [currentMember, setCurrentMember] = useState<any>(null);
 
   const { data: project, isLoading } = useQuery({
     queryKey: [`/api/projects/${id}`],
@@ -18,6 +42,138 @@ export default function ProjectDetailPage() {
   const { data: recentReports, isLoading: isReportsLoading } = useQuery({
     queryKey: [`/api/projects/${id}/reports`],
   });
+  
+  const { data: teamMembers, isLoading: isTeamLoading } = useQuery({
+    queryKey: [`/api/projects/${id}/team`],
+  });
+  
+  // Formulário para adicionar/editar membro da equipe
+  const form = useForm<TeamMemberFormValues>({
+    resolver: zodResolver(teamMemberSchema),
+    defaultValues: {
+      name: "",
+      role: "",
+      company: "",
+      contact: "",
+      notes: ""
+    },
+  });
+
+  // Mutação para criar membro da equipe
+  const createTeamMemberMutation = useMutation({
+    mutationFn: async (data: TeamMemberFormValues) => {
+      const res = await apiRequest(
+        "POST",
+        `/api/projects/${id}/team`,
+        data
+      );
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
+      toast({
+        title: "Membro adicionado",
+        description: "Membro da equipe adicionado com sucesso.",
+      });
+      setTeamMemberDialogOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar membro da equipe: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutação para atualizar membro da equipe
+  const updateTeamMemberMutation = useMutation({
+    mutationFn: async (data: TeamMemberFormValues & { id: number }) => {
+      const { id: memberId, ...memberData } = data;
+      const res = await apiRequest(
+        "PUT",
+        `/api/team/${memberId}`,
+        memberData
+      );
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
+      toast({
+        title: "Membro atualizado",
+        description: "Membro da equipe atualizado com sucesso.",
+      });
+      setTeamMemberDialogOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar membro da equipe: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutação para excluir membro da equipe
+  const deleteTeamMemberMutation = useMutation({
+    mutationFn: async (memberId: number) => {
+      await apiRequest(
+        "DELETE",
+        `/api/team/${memberId}`
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
+      toast({
+        title: "Membro removido",
+        description: "Membro da equipe removido com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover membro da equipe: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Handlers para o diálogo de membro da equipe
+  const handleOpenTeamMemberDialog = (member?: any) => {
+    if (member) {
+      setCurrentMember(member);
+      form.reset({
+        name: member.name,
+        role: member.role,
+        company: member.company || "",
+        contact: member.contact || "",
+        notes: member.notes || "",
+      });
+    } else {
+      setCurrentMember(null);
+      form.reset({
+        name: "",
+        role: "",
+        company: "",
+        contact: "",
+        notes: "",
+      });
+    }
+    setTeamMemberDialogOpen(true);
+  };
+
+  const handleTeamMemberSubmit = (data: TeamMemberFormValues) => {
+    if (currentMember) {
+      updateTeamMemberMutation.mutate({
+        ...data,
+        id: currentMember.id,
+      });
+    } else {
+      createTeamMemberMutation.mutate(data);
+    }
+  };
 
   if (isLoading) {
     return (
