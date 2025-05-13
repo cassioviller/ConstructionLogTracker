@@ -61,7 +61,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RDO routes
-  app.get("/api/projects/:id/reports", requireAuth, async (req, res) => {
+  // Esta rota serve tanto para /reports quanto para /rdos para compatibilidade
+  app.get(["/api/projects/:id/reports", "/api/projects/:id/rdos"], requireAuth, async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
       const page = parseInt(req.query.page as string) || 1;
@@ -92,7 +93,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Rota para obter todos os RDOs (independente do projeto)
-  app.get("/api/reports", requireAuth, async (req, res) => {
+  // Esta rota serve tanto para /reports quanto para /rdos para compatibilidade
+  app.get(["/api/reports", "/api/rdos"], requireAuth, async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
