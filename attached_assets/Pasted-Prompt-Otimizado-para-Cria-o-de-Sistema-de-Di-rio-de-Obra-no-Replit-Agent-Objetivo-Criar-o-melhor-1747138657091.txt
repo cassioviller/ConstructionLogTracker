@@ -1,0 +1,40 @@
+Prompt Otimizado para Criação de Sistema de Diário de Obra no Replit Agent
+Objetivo: Criar o melhor sistema de Diário de Obra (RDO) existente, focado nas necessidades de equipes de engenharia civil e montagem metálica no Brasil, com deploy automatizado via Docker no EasyPanel e banco de dados PostgreSQL.
+Prompt Principal (MVP Inicial):
+"Crie um aplicativo web completo de Diário de Obra chamado 'Meu Diário de Obra Pro'. O sistema deve permitir que usuários (engenheiros, mestres de obra, técnicos) se cadastrem e façam login. Após o login, eles devem poder criar e gerenciar múltiplos projetos de obras. Para cada obra, o foco principal é a criação de Relatórios Diários de Obra (RDOs).
+O RDO deve incluir os seguintes campos e funcionalidades:
+Cabeçalho do RDO: Número do relatório (sequencial por obra), Data, Nome da Obra, Cliente, Local da Obra, Logo da Empresa (permitir upload do logo nas configurações do sistema/usuário).
+Condições Climáticas: Campos para registrar o clima em três períodos (Manhã, Tarde, Noite) com opções pré-definidas (ex: Ensolarado, Nublado, Chuvoso, Ventoso) e um campo de observações climáticas.
+Mão de Obra: Seção para listar a mão de obra presente, permitindo adicionar Função (ex: Engenheiro, Encarregado, Pedreiro, Servente), Quantidade de Pessoas por Função, e um campo para Nome/Observação individual se necessário. Deve ser possível registrar o horário de entrada/saída e intervalos para cada equipe ou individualmente (opcional, mas desejável).
+Equipamentos: Seção para listar os equipamentos utilizados no dia (ex: Betoneira, Escavadeira, Andaime), com campo para Quantidade e Horas de Uso/Observações.
+Atividades Executadas: Área de texto rica (ou campos estruturados) para descrever as atividades realizadas durante o dia, com opção de marcar o percentual de conclusão da atividade ou status (ex: Em Andamento, Concluído, Pendente).
+Ocorrências/Eventos: Seção para registrar eventos importantes ou problemas fora do escopo (ex: Acidentes, Falta de Material, Chuva Forte que paralisou trabalhos). Permitir adicionar tags para facilitar a filtragem posterior (ex: Segurança, Material, Clima).
+Registro Fotográfico: Funcionalidade para upload de múltiplas fotos e vídeos (limitar tamanho/quantidade inicialmente) associados ao RDO, com campo para legenda em cada foto/vídeo.
+Comentários Colaborativos: Uma seção de comentários no RDO para que a equipe do projeto e, opcionalmente, o cliente (se tiver acesso) possam discutir os apontamentos do dia.
+Geração de PDF: Botão para gerar um PDF do RDO preenchido, com layout profissional, incluindo o logo da empresa e todas as informações registradas, incluindo fotos (em formato otimizado no PDF).
+Funcionalidades Gerais do Sistema (MVP):
+Autenticação de Usuários: Cadastro, login, recuperação de senha.
+Gerenciamento de Obras: Criar nova obra (com informações básicas como nome, cliente, local), listar obras existentes.
+Dashboard da Obra (Simplificado): Ao selecionar uma obra, exibir um painel com as últimas fotos adicionadas, os últimos RDOs criados e um resumo de prazos (se houver campo para isso no cadastro da obra).
+Filtros e Buscas: Permitir filtrar RDOs por data, obra, e buscar por palavras-chave nas atividades ou ocorrências. Permitir filtrar fotos e vídeos.
+Responsividade: O sistema deve ser responsivo para uso em desktops, tablets e smartphones.
+Banco de Dados: Utilizar PostgreSQL para armazenamento dos dados.
+Deploy: Configurar para deploy automatizado via Docker, visando integração com EasyPanel.
+Tecnologias Sugeridas (se o Agent precisar de um ponto de partida, mas priorize a melhor escolha para o objetivo):
+Frontend: React ou Vue.js
+Backend: Node.js (Express.js) ou Python (Django/Flask)
+Instruções Adicionais para o Agent:
+Priorize uma interface de usuário limpa, intuitiva e fácil de usar, especialmente para as equipes de campo.
+Garanta a segurança dos dados e das transações.
+Comece pela estrutura do banco de dados e as funcionalidades de autenticação e cadastro de obras.
+Em seguida, desenvolva o módulo de criação e visualização do RDO com todos os campos detalhados.
+Implemente a funcionalidade de upload de imagens e geração de PDF como etapas cruciais.
+A funcionalidade offline para o preenchimento do RDO em campo é um grande diferencial para o mercado brasileiro; se possível, planeje uma forma de armazenamento local e sincronização posterior.
+O sistema deve ser em Português do Brasil."
+Iterações Futuras (Pós-MVP - para prompts subsequentes):
+"Adicione um módulo de Controle de Materiais ao sistema 'Meu Diário de Obra Pro', permitindo registrar materiais recebidos (com NF, fornecedor) e materiais utilizados em cada RDO, com baixa automática de estoque (simplificada)."
+"Implemente gráficos e dashboards mais avançados para análise de mão de obra (horas trabalhadas por função), condições climáticas (dias de chuva vs. dias trabalhados), e progresso de atividades por obra."
+"Integre o sistema com o WhatsApp para notificações de ocorrências importantes ou resumo diário do RDO para gestores."
+"Crie um portal do cliente com acesso restrito para visualização dos RDOs e fotos da obra."
+"Desenvolva um módulo de controle de ponto mais detalhado para a mão de obra, com cálculo de horas extras."
+"Adicione permissões de usuário mais granulares (ex: administrador, gerente de projeto, engenheiro de campo, cliente)."
