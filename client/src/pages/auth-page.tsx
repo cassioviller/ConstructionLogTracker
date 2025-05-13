@@ -22,8 +22,8 @@ import { Redirect } from "wouter";
 
 // Extend the insertUserSchema for login form
 const loginSchema = z.object({
-  username: z.string().email({ message: "Digite um e-mail válido" }),
-  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" }),
+  username: z.string().min(1, { message: "Digite o nome de usuário" }),
+  password: z.string().min(1, { message: "Digite a senha" }),
   rememberMe: z.boolean().optional(),
 });
 

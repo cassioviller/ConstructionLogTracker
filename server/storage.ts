@@ -42,6 +42,7 @@ export interface IStorage {
   getNextRdoNumber(projectId: number): Promise<number>;
   createRdo(rdo: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo>;
   updateRdo(id: number, data: Partial<Rdo>): Promise<Rdo | undefined>;
+  getAllRdosForDebug(): Map<number, Rdo>;
   
   // Photos
   getPhotos(options: PhotoFilterOptions): Promise<Photo[]>;
@@ -383,6 +384,11 @@ export class MemStorage implements IStorage {
     
     this.rdos.set(id, updatedRdo);
     return updatedRdo;
+  }
+  
+  // Método de depuração para obter todos os RDOs diretamente
+  getAllRdosForDebug(): Map<number, Rdo> {
+    return this.rdos;
   }
 
   // Photo methods
