@@ -57,7 +57,7 @@ export interface IStorage {
   getRecentReports(userId: number): Promise<any[]>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
 export class MemStorage implements IStorage {
@@ -66,11 +66,13 @@ export class MemStorage implements IStorage {
   private rdos: Map<number, Rdo>;
   private photos: Map<number, Photo>;
   private teams: Map<number, any[]>;
+  private teamMembers: Map<number, TeamMember>;
   private userIdCounter: number;
   private projectIdCounter: number;
   private rdoIdCounter: number;
   private photoIdCounter: number;
-  sessionStore: session.SessionStore;
+  private teamMemberIdCounter: number;
+  sessionStore: any; // Usando any para evitar problemas com o tipo SessionStore
 
   constructor() {
     this.users = new Map();
@@ -78,10 +80,12 @@ export class MemStorage implements IStorage {
     this.rdos = new Map();
     this.photos = new Map();
     this.teams = new Map();
+    this.teamMembers = new Map();
     this.userIdCounter = 1;
     this.projectIdCounter = 1;
     this.rdoIdCounter = 1;
     this.photoIdCounter = 1;
+    this.teamMemberIdCounter = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // 24 hours
     });
@@ -415,6 +419,48 @@ export class MemStorage implements IStorage {
       });
     
     return reports;
+  }
+
+  // Métodos de gerenciamento de membros da equipe
+  async getTeamMembers(projectId: number): Promise<TeamMember[]> {
+    return Array.from(this.teamMembers.values())
+      .filter(member => member.projectId === projectId);
+  }
+
+  async getTeamMember(id: number): Promise<TeamMember | undefined> {
+    return this.teamMembers.get(id);
+  }
+
+  async createTeamMember(memberData: InsertTeamMember & { createdBy: number }): Promise<TeamMember> {
+    const id = this.teamMemberIdCounter++;
+    const now = new Date();
+    
+    const teamMember: TeamMember = {
+      ...memberData,
+      id,
+      createdAt: now
+    };
+    
+    this.teamMembers.set(id, teamMember);
+    return teamMember;
+  }
+
+  async updateTeamMember(id: number, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
+    const existingMember = this.teamMembers.get(id);
+    if (!existingMember) return undefined;
+    
+    const updatedMember = {
+      ...existingMember,
+      ...data
+    };
+    
+    this.teamMembers.set(id, updatedMember);
+    return updatedMember;
+  }
+
+  async deleteTeamMember(id: number): Promise<boolean> {
+    if (!this.teamMembers.has(id)) return false;
+    return this.teamMembers.delete(id);
   }
 }
 
