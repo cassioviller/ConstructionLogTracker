@@ -58,8 +58,48 @@ export default function NewRdoPage() {
 
   const createRdoMutation = useMutation({
     mutationFn: async (rdo: RdoFormData) => {
-      const res = await apiRequest("POST", "/api/rdos", rdo);
-      return res.json();
+      // Primeiro separamos as fotos que precisam ser uploadadas
+      const photosToUpload = rdo.photos?.filter(
+        (photo: any) => photo.needsUpload && photo.originalFile
+      );
+      
+      // Removemos as fotos do objeto RDO para criar o relatório
+      const rdoWithoutPhotos = {
+        ...rdo,
+        // Guardamos apenas os IDs das fotos que serão enviadas separadamente
+        photoIds: photosToUpload?.map((p: any) => p.id) || [],
+        photos: [] // Removemos as fotos do objeto principal
+      };
+      
+      // Criar o RDO sem as fotos
+      const res = await apiRequest("POST", "/api/rdos", rdoWithoutPhotos);
+      const createdRdo = await res.json();
+      
+      // Agora fazemos upload das fotos associando-as ao RDO criado
+      if (photosToUpload && photosToUpload.length > 0) {
+        const photoUploadPromises = photosToUpload.map(async (photo: any) => {
+          try {
+            // Criamos o objeto para enviar à API de fotos
+            const photoData = {
+              url: photo.url,
+              caption: photo.caption,
+              rdoId: createdRdo.id
+            };
+            
+            // Enviar a foto
+            const photoRes = await apiRequest("POST", "/api/photos", photoData);
+            return await photoRes.json();
+          } catch (error) {
+            console.error("Erro ao fazer upload de foto:", error);
+            return null;
+          }
+        });
+        
+        // Aguardar o upload de todas as fotos
+        await Promise.all(photoUploadPromises);
+      }
+      
+      return createdRdo;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });

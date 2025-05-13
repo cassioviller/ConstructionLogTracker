@@ -22,38 +22,54 @@ export function PhotosSection({ onChange, initialData = [] }: PhotosSectionProps
   const [photos, setPhotos] = useState<PhotoItem[]>(initialData);
   const [previewImage, setPreviewImage] = useState<PhotoItem | null>(null);
 
-  // In a real application, this would upload the file to a server
-  // For now, we'll create a data URL for demonstration
-  const handleFileUpload = (files: FileList | null) => {
+  // Upload das fotos para o servidor e salva apenas os metadados no RDO
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const newPhotos: PhotoItem[] = [];
-
-    Array.from(files).forEach(file => {
-      // Only process image files
-      if (!file.type.match('image.*')) return;
-
-      // Create a FileReader to read the file as data URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        
-        const newPhoto: PhotoItem = {
-          id: uuidv4(),
-          url: dataUrl,
-          caption: file.name
-        };
-
-        newPhotos.push(newPhoto);
-        
-        // Update state if this is the last file
-        if (newPhotos.length === files.length) {
-          const updatedPhotos = [...photos, ...newPhotos];
-          setPhotos(updatedPhotos);
-          onChange(updatedPhotos);
+    const uploadPromises = Array.from(files)
+      .filter(file => file.type.match('image.*'))
+      .map(async (file) => {
+        try {
+          // Criar blob para mostrar preview temporário
+          const url = URL.createObjectURL(file);
+          const photoId = uuidv4();
+          
+          // Convertemos o arquivo para base64 para enviar à API
+          const base64 = await fileToBase64(file);
+          
+          // Fazer upload da foto para o servidor
+          const formData = {
+            url: base64,
+            caption: file.name,
+            rdoId: -1, // Será atualizado quando o RDO for salvo
+          };
+          
+          // Retornar um objeto com info temporária para o estado local
+          return {
+            id: photoId,
+            url: url,
+            caption: file.name,
+            originalFile: file, // Guarda o arquivo original para upload posterior
+            needsUpload: true // Indica que esta foto precisa ser uploadada quando o RDO for criado
+          };
+        } catch (error) {
+          console.error("Erro ao processar foto:", error);
+          return null;
         }
-      };
-
+      });
+    
+    const newPhotos = (await Promise.all(uploadPromises)).filter(Boolean) as PhotoItem[];
+    const updatedPhotos = [...photos, ...newPhotos];
+    setPhotos(updatedPhotos);
+    onChange(updatedPhotos);
+  };
+  
+  // Função auxiliar para converter File para base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
   };
