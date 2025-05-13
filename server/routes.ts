@@ -407,9 +407,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Recent reports for dashboard
   app.get("/api/recent-reports", requireAuth, async (req, res) => {
     try {
-      const reports = await storage.getRecentReports(req.user!.id);
+      const limit = parseInt(req.query.limit as string) || 5;
+      console.log("Buscando relatórios recentes para o usuário ID:", req.user!.id);
+      const reports = await storage.getRecentReports(req.user!.id, limit);
+      console.log(`Encontrados ${reports.length} relatórios recentes`);
       res.json(reports);
     } catch (error) {
+      console.error("Erro ao buscar relatórios recentes:", error);
       res.status(500).json({ message: "Erro ao buscar relatórios recentes" });
     }
   });
