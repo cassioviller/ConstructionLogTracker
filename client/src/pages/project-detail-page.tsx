@@ -298,7 +298,7 @@ export default function ProjectDetailPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-800">Galeria</h2>
-              <Link href={`/project/${id}/photo-gallery`}>
+              <Link href={`/photos?projectId=${id}`}>
                 <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium p-0">
                   Ver todas
                 </Button>
@@ -334,15 +334,15 @@ export default function ProjectDetailPage() {
             </div>
             <div className="border-t border-slate-200 pt-4 mt-4">
               <div className="flex flex-col space-y-2">
-                <Link href={`/project/${id}/photo-gallery`}>
+                <Link href={`/photos?projectId=${id}`}>
                   <Button variant="ghost" className="w-full justify-between">
                     <span>Ver galeria completa</span>
                     <ArrowLeft className="h-4 w-4 rotate-180" />
                   </Button>
                 </Link>
-                <Link href={`/project/${id}/add-photos`}>
+                <Link href={`/new-rdo?projectId=${id}`}>
                   <Button variant="ghost" className="w-full justify-between">
-                    <span>Adicionar fotos</span>
+                    <span>Criar novo RDO</span>
                     <PlusIcon className="h-4 w-4" />
                   </Button>
                 </Link>

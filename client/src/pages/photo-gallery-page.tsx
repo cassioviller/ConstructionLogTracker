@@ -74,21 +74,41 @@ const PhotoModal = ({ photo, onClose }: { photo: Photo; onClose: () => void }) =
 };
 
 export default function PhotoGalleryPage() {
-  const { id: projectId } = useParams();
+  const [location] = useLocation();
   const [_, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState<string>("all");
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  
+  // Extrair o projectId da URL, se existir
+  const urlParams = new URLSearchParams(location.split('?')[1]);
+  const projectIdFromUrl = urlParams.get('projectId');
+  
+  // Se tiver projectId na URL, use-o e selecione a tab correspondente
+  useEffect(() => {
+    if (projectIdFromUrl) {
+      setSelectedTab(`project-${projectIdFromUrl}`);
+    }
+  }, [projectIdFromUrl]);
 
-  // Buscar informações do projeto
+  // Buscar todos os projetos para as abas
+  const { data: projects, isLoading: isProjectsLoading } = useQuery({
+    queryKey: ['/api/projects'],
+  });
+  
+  // Buscar informações de um projeto específico, se fornecido na URL
   const { data: project, isLoading: isProjectLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}`],
+    queryKey: [`/api/projects/${projectIdFromUrl}`],
+    enabled: !!projectIdFromUrl,
   });
 
-  // Buscar fotos relacionadas ao projeto
+  // Buscar todas as fotos ou filtrar por projeto
   const { data: photos, isLoading: isPhotosLoading } = useQuery({
-    queryKey: [`/api/photos`, { projectId }],
+    queryKey: [`/api/photos`, { projectId: projectIdFromUrl }],
     queryFn: async () => {
-      const res = await fetch(`/api/photos?projectId=${projectId}`);
+      const url = projectIdFromUrl 
+        ? `/api/photos?projectId=${projectIdFromUrl}` 
+        : `/api/photos`;
+      const res = await fetch(url);
       if (!res.ok) {
         throw new Error("Erro ao buscar fotos");
       }
@@ -141,19 +161,19 @@ export default function PhotoGalleryPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/project/${projectId}`)}
+            onClick={() => navigate(projectIdFromUrl ? `/projects/${projectIdFromUrl}` : '/projects')}
             className="mr-3"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Galeria de Fotos</h1>
-            <p className="text-slate-500">{project?.name}</p>
+            {project && <p className="text-slate-500">{project.name}</p>}
           </div>
         </div>
-        <Button onClick={() => navigate(`/project/${projectId}/add-photos`)}>
+        <Button onClick={() => navigate(`/new-rdo${projectIdFromUrl ? `?projectId=${projectIdFromUrl}` : ''}`)}>
           <Plus className="h-4 w-4 mr-2" />
-          Adicionar Fotos
+          Novo RDO
         </Button>
       </div>
 
@@ -167,6 +187,19 @@ export default function PhotoGalleryPage() {
             <Calendar className="h-4 w-4 mr-2" />
             Separadas por Dia
           </TabsTrigger>
+          {/* Adicionar abas por projeto */}
+          {!isProjectsLoading && projects && Array.isArray(projects) && 
+            projects.map((proj) => (
+              <TabsTrigger 
+                key={`project-${proj.id}`}
+                value={`project-${proj.id}`} 
+                className="flex items-center"
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                {proj.name}
+              </TabsTrigger>
+            ))
+          }
         </TabsList>
 
         <TabsContent value="all" className="mt-2">
