@@ -5,7 +5,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Calendar, Image } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Plus, 
+  Calendar, 
+  Image, 
+  Building2, 
+  PlusIcon 
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Photo } from "@shared/schema";
@@ -224,13 +231,70 @@ export default function PhotoGalleryPage() {
               <Image className="h-12 w-12 mx-auto mb-3 text-slate-300" />
               <h3 className="text-xl font-semibold text-slate-700">Nenhuma foto encontrada</h3>
               <p className="text-slate-500 mb-4">Adicione fotos para visualizá-las aqui</p>
-              <Button onClick={() => navigate(`/project/${projectId}/add-photos`)}>
+              <Button onClick={() => navigate(`/new-rdo${projectIdFromUrl ? `?projectId=${projectIdFromUrl}` : ''}`)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar Fotos
+                Novo RDO
               </Button>
             </div>
           )}
         </TabsContent>
+        
+        {/* Abas de conteúdo para cada projeto */}
+        {!isProjectsLoading && projects && Array.isArray(projects) && projects.map((proj: any) => (
+          <TabsContent 
+            key={`project-content-${proj.id}`} 
+            value={`project-${proj.id}`} 
+            className="mt-2"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-slate-800">Fotos: {proj.name}</h2>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate(`/new-rdo?projectId=${proj.id}`)}
+              >
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Novo RDO
+              </Button>
+            </div>
+            
+            {isPhotosLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square rounded-md" />
+                ))}
+              </div>
+            ) : (photos || []).length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {photos
+                  .filter((photo: Photo) => {
+                    // Se estiver visualizando um projeto específico, mantemos apenas suas fotos
+                    // Porém como o backend já faz esse filtro quando usamos o parâmetro projectId,
+                    // Isso só é necessário quando usamos as abas para navegar entre projetos
+                    return projectIdFromUrl === String(proj.id) || 
+                      (selectedTab === `project-${proj.id}`);
+                  })
+                  .map((photo: Photo) => (
+                    <PhotoCard 
+                      key={photo.id} 
+                      photo={photo} 
+                      onClick={() => setSelectedPhoto(photo)} 
+                    />
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 border border-dashed rounded-lg">
+                <Image className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                <h3 className="text-xl font-semibold text-slate-700">Nenhuma foto encontrada para este projeto</h3>
+                <p className="text-slate-500 mb-4">Adicione fotos através da criação de um novo RDO</p>
+                <Button onClick={() => navigate(`/new-rdo?projectId=${proj.id}`)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo RDO
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        ))}
 
         <TabsContent value="by-date" className="mt-2">
           {isPhotosLoading ? (
@@ -262,7 +326,7 @@ export default function PhotoGalleryPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {photosByDate[date].map((photo) => (
+                    {photosByDate[date].map((photo: Photo) => (
                       <PhotoCard 
                         key={photo.id} 
                         photo={photo} 
@@ -277,10 +341,10 @@ export default function PhotoGalleryPage() {
             <div className="text-center py-20 border border-dashed rounded-lg">
               <Calendar className="h-12 w-12 mx-auto mb-3 text-slate-300" />
               <h3 className="text-xl font-semibold text-slate-700">Nenhuma foto encontrada</h3>
-              <p className="text-slate-500 mb-4">Adicione fotos para visualizá-las aqui</p>
-              <Button onClick={() => navigate(`/project/${projectId}/add-photos`)}>
+              <p className="text-slate-500 mb-4">Adicione fotos através da criação de um novo RDO</p>
+              <Button onClick={() => navigate(`/new-rdo${projectIdFromUrl ? `?projectId=${projectIdFromUrl}` : ''}`)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar Fotos
+                Novo RDO
               </Button>
             </div>
           )}
