@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import MainLayout from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
@@ -94,12 +94,12 @@ export default function ProjectDetailPage() {
   const projectForm = useForm<ProjectEditFormValues>({
     resolver: zodResolver(projectEditSchema),
     defaultValues: {
-      responsible: "",
-      startDate: "",
-      endDate: "",
-      client: "",
-      location: "",
-      status: "active"
+      responsible: project?.responsible || "",
+      startDate: project?.startDate || "",
+      endDate: project?.endDate || "",
+      client: project?.client || "",
+      location: project?.location || "",
+      status: project?.status || "active"
     }
   });
 
@@ -210,6 +210,20 @@ export default function ProjectDetailPage() {
       });
     },
   });
+  
+  // Effect para atualizar o formulário quando o projeto for carregado
+  useEffect(() => {
+    if (project) {
+      projectForm.reset({
+        responsible: project.responsible || "",
+        startDate: project.startDate || "",
+        endDate: project.endDate || "",
+        client: project.client || "",
+        location: project.location || "",
+        status: project.status || "active"
+      });
+    }
+  }, [project, projectForm]);
   
   // Handlers para o diálogo de membro da equipe
   const handleOpenTeamMemberDialog = (member?: any) => {
