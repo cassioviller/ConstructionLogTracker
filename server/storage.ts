@@ -744,27 +744,40 @@ export class DatabaseStorage implements IStorage {
       // Converter projectId para número para garantir a comparação correta
       const numericProjectId = Number(projectId);
       
+      // Log de depuração
+      console.log(`Buscando por RDOs com projectId = ${numericProjectId}`);
+      
+      // Buscar todos RDOs deste projeto para debug
+      const allProjectRdos = await db.select().from(rdos).where(eq(rdos.projectId, numericProjectId));
+      console.log(`DEBUG - Total de RDOs para projeto ${numericProjectId} (sem filtros): ${allProjectRdos.length}`);
+      
+      if (allProjectRdos.length === 0) {
+        console.log(`ATENÇÃO: Nenhum RDO encontrado para o projeto ${numericProjectId}`);
+      } else {
+        console.log(`IDs dos RDOs encontrados: ${allProjectRdos.map(r => r.id).join(', ')}`);
+      }
+      
       // Construir consulta base
       let query = db.select().from(rdos).where(eq(rdos.projectId, numericProjectId));
       
       // Aplicar filtro de busca se fornecido
       if (search) {
-        // Implementar busca por número ou conteúdo
+        console.log(`Aplicando filtro de busca: ${search}`);
         query = query.where(like(rdos.weatherNotes, `%${search}%`));
       }
       
       // Aplicar filtro de mês se fornecido
       if (month && month !== 'all') {
-        // Extrai mês da data para filtrar
+        console.log(`Aplicando filtro de mês: ${month}`);
         const monthNumber = parseInt(month);
-        // Implementação simplificada - idealmente usar funções SQL específicas do PostgreSQL
-        // para extrair o mês de uma data
+        // No futuro, implementar filtro por mês usando funções SQL específicas do PostgreSQL
       }
       
       // Contar total para paginação
       const [result] = await db.select({ count: sql`count(*)` }).from(rdos)
         .where(eq(rdos.projectId, numericProjectId));
       const total = Number(result.count);
+      console.log(`Total de registros encontrados: ${total}`);
       const totalPages = Math.ceil(total / limit);
       
       // Obter registros com paginação
@@ -774,7 +787,7 @@ export class DatabaseStorage implements IStorage {
         .limit(limit)
         .offset(offset);
       
-      console.log(`Encontrados ${rdosList.length} RDOs para o projeto ${projectId}`);
+      console.log(`Encontrados ${rdosList.length} RDOs para o projeto ${projectId} (com filtros aplicados)`);
       
       return {
         items: rdosList,
@@ -871,18 +884,38 @@ export class DatabaseStorage implements IStorage {
 
   async createRdo(rdoData: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo> {
     try {
-      console.log(`Criando novo RDO: Projeto ${rdoData.projectId}, Número ${rdoData.number}`);
-      
       // Garantir que projectId seja numérico
       const projectId = Number(rdoData.projectId);
       
-      // Criar RDO no banco
+      // Verificar se o projeto existe antes de criar o RDO
+      const project = await this.getProject(projectId);
+      if (!project) {
+        throw new Error(`O projeto com ID ${projectId} não existe`);
+      }
+      
+      console.log(`Criando novo RDO: Projeto ${projectId} (${project.name}), Número ${rdoData.number}`);
+      
+      // Log dos dados do RDO para validação
+      console.log(`Dados do RDO a ser criado:`, JSON.stringify({
+        projectId,
+        number: rdoData.number,
+        date: rdoData.date,
+        status: rdoData.status,
+        createdBy: rdoData.createdBy,
+      }, null, 2));
+      
+      // Criar RDO no banco garantindo que o projectId seja explicitamente informado
       const [rdo] = await db.insert(rdos).values({
         ...rdoData,
         projectId
       }).returning();
       
-      console.log(`RDO criado com sucesso: ID ${rdo.id}`);
+      console.log(`RDO criado com sucesso: ID ${rdo.id}, vinculado ao projeto ${projectId}`);
+      
+      // Buscar o RDO recém-criado para confirmar que foi salvo corretamente
+      const savedRdo = await this.getRdo(rdo.id);
+      console.log(`RDO verificado: ID ${savedRdo?.id}, Projeto ${savedRdo?.projectId}`);
+      
       return rdo;
     } catch (error) {
       console.error("Erro ao criar RDO:", error);

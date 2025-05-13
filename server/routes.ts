@@ -125,9 +125,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/rdos", requireAuth, async (req, res) => {
     try {
+      console.log("Solicitação para criar novo RDO:", JSON.stringify(req.body, null, 2));
+      
+      // Validar dados do RDO
       const rdoData = insertRdoSchema.parse(req.body);
+      
+      // Validar projectId - fundamental para a associação correta
+      if (!rdoData.projectId) {
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          errors: [{ path: ["projectId"], message: "O ID do projeto é obrigatório" }]
+        });
+      }
+      
+      // Verificar se o projeto existe
+      const project = await storage.getProject(rdoData.projectId);
+      if (!project) {
+        return res.status(404).json({ 
+          message: "Projeto não encontrado", 
+          errors: [{ path: ["projectId"], message: `Projeto com ID ${rdoData.projectId} não existe` }]
+        });
+      }
+      
+      console.log(`Gerando próximo número de RDO para o projeto ${rdoData.projectId} (${project.name})`);
       const nextNumber = await storage.getNextRdoNumber(rdoData.projectId);
       
+      console.log(`Criando RDO com número ${nextNumber} para o projeto ${rdoData.projectId}`);
       const rdo = await storage.createRdo({
         ...rdoData,
         number: nextNumber,
@@ -135,12 +158,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "completed"
       });
       
+      // Confirmar que o RDO foi criado corretamente
+      console.log(`RDO criado com sucesso: ID ${rdo.id}, Projeto ${rdo.projectId}`);
+      
       res.status(201).json(rdo);
     } catch (error) {
+      console.error("Erro ao criar RDO:", error);
+      
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       }
-      res.status(500).json({ message: "Erro ao criar RDO" });
+      
+      // Mensagem de erro mais específica para diagnóstico
+      const errorMessage = error instanceof Error ? error.message : "Erro ao criar RDO";
+      res.status(500).json({ message: errorMessage });
     }
   });
 

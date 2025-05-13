@@ -37,10 +37,10 @@ export default function RdoHistoryPage() {
   });
 
   // Fetch RDO list for this project with pagination
-  const { data: rdoResponse, isLoading: isRdoLoading } = useQuery({
+  const { data: rdoResponse, isLoading: isRdoLoading, error: rdoError } = useQuery({
     queryKey: [`/api/projects/${projectId}/reports`, page, searchTerm, monthFilter],
     queryFn: async ({ queryKey }) => {
-      const [_, projectId, page, search, month] = queryKey;
+      const [baseUrl, page, search, month] = queryKey;
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
@@ -49,9 +49,22 @@ export default function RdoHistoryPage() {
       if (search) params.append("search", search.toString());
       if (month && month !== "all") params.append("month", month.toString());
       
-      const res = await fetch(`/api/projects/${projectId}/reports?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch reports");
-      return res.json();
+      console.log(`Buscando RDOs para projeto ${projectId} com parâmetros:`, params.toString());
+      
+      try {
+        const res = await fetch(`${baseUrl}?${params.toString()}`);
+        if (!res.ok) {
+          console.error(`Erro ao buscar RDOs: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to fetch reports: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log(`RDOs recebidos: ${data.items?.length || 0} registros`);
+        return data;
+      } catch (error) {
+        console.error("Erro ao buscar RDOs:", error);
+        throw error;
+      }
     },
   });
 
@@ -200,7 +213,7 @@ export default function RdoHistoryPage() {
                           {format(new Date(rdo.date), "dd/MM/yyyy")}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          {rdo.responsible?.name || "N/A"}
+                          {rdo.createdByName || "N/A"}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-500">
                           <div className="flex items-center">
@@ -256,10 +269,10 @@ export default function RdoHistoryPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          {rdo.workforce?.length || 0} pessoas
+                          {rdo.workforceCount || 0} pessoas
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-500">
-                          {rdo.occurrences?.length || 0} {rdo.occurrences?.length === 1 ? "ocorrência" : "ocorrências"}
+                          {rdo.occurrenceCount || 0} {rdo.occurrenceCount === 1 ? "ocorrência" : "ocorrências"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-2">
