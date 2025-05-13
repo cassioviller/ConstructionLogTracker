@@ -49,9 +49,9 @@ export async function generatePdfRdo(rdo: Rdo, project: Project): Promise<Buffer
       // Caso exista um logo, adicionar aqui
       // doc.image('path/to/logo.png', 50, 45, { width: 50 });
       
-      // Título principal
+      // Título principal com o número do RDO em destaque
       doc.font('Helvetica-Bold').fontSize(18).fillColor('#333333')
-        .text('RELATÓRIO DIÁRIO DE OBRA', { align: 'center' });
+        .text(`RELATÓRIO DIÁRIO DE OBRA - RDO #${rdo.number}`, { align: 'center' });
       
       doc.moveDown(0.5);
       
@@ -60,8 +60,11 @@ export async function generatePdfRdo(rdo: Rdo, project: Project): Promise<Buffer
         .fillAndStroke('#f8f9fa', '#dee2e6');
         
       doc.fillColor('#333333').fontSize(12);
-      doc.font('Helvetica-Bold').text(`RDO #${rdo.number}`, 70, doc.y + 15);
-      doc.font('Helvetica').text(`Data: ${new Date(rdo.date).toLocaleDateString('pt-BR')}`, 350, doc.y - 12);
+      // Número do RDO em destaque com tamanho maior e cor diferente
+      doc.font('Helvetica-Bold').fontSize(14).fillColor('#2563eb')
+        .text(`Relatório Nº ${rdo.number}`, 70, doc.y + 15);
+      doc.font('Helvetica').fontSize(12).fillColor('#333333')
+        .text(`Data: ${new Date(rdo.date).toLocaleDateString('pt-BR')}`, 350, doc.y - 12);
       
       doc.moveDown(0.4);
       doc.font('Helvetica-Bold').text('Projeto:', 70, doc.y);

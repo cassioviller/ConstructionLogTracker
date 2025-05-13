@@ -63,7 +63,7 @@ export interface IStorage {
   
   // Stats
   getStats(userId: number): Promise<any>;
-  getRecentReports(userId: number): Promise<any[]>;
+  getRecentReports(userId: number, limit?: number): Promise<any[]>;
   
   // Session store
   sessionStore: any;
@@ -548,14 +548,14 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getRecentReports(userId: number): Promise<any[]> {
+  async getRecentReports(userId: number, limit: number = 5): Promise<any[]> {
     const userProjects = await this.getProjects(userId);
     const projectIds = userProjects.map(p => p.id);
     
     const reports = Array.from(this.rdos.values())
       .filter(rdo => projectIds.includes(rdo.projectId))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5) // Get most recent 5
+      .slice(0, limit) // Get most recent reports based on limit parameter
       .map(rdo => {
         const project = this.projects.get(rdo.projectId);
         const user = rdo.createdBy ? this.users.get(rdo.createdBy) : undefined;
@@ -1142,9 +1142,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getRecentReports(userId: number): Promise<any[]> {
+  async getRecentReports(userId: number, limit: number = 5): Promise<any[]> {
     try {
-      console.log(`Buscando relatórios recentes para o usuário ID: ${userId}`);
+      console.log(`Buscando relatórios recentes para o usuário ID: ${userId}, limite: ${limit}`);
       
       // Buscar RDOs recentes
       const recentRdos = await db.select({
@@ -1157,7 +1157,7 @@ export class DatabaseStorage implements IStorage {
       .from(rdos)
       .where(eq(rdos.createdBy, userId))
       .orderBy(desc(rdos.date))
-      .limit(5);
+      .limit(limit);
       
       // Para cada RDO, buscar o nome do projeto
       const enhancedRdos = await Promise.all(recentRdos.map(async (rdo) => {
