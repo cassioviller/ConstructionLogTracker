@@ -445,14 +445,72 @@ export async function generatePdfRdo(rdo: Rdo, project: Project): Promise<Buffer
       if (Array.isArray(photos) && photos.length > 0) {
         addSectionTitle(doc, 'REGISTRO FOTOGRÁFICO');
         
-        // Como não podemos carregar imagens externas aqui, vamos apenas listar os nomes/URLs das fotos
-        doc.font('Helvetica').fontSize(10);
-        doc.text('FOTOS DISPONÍVEIS NO SISTEMA:', { underline: true });
+        // Informações sobre o registro fotográfico com estilo melhorado
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#2563eb');
+        doc.text(`Total de fotos: ${photos.length}`, { continued: true });
+        doc.font('Helvetica').fillColor('#333333').text(' (Todas as fotos estão disponíveis no sistema online)');
+        
+        // Tabela para listar as fotos
+        doc.moveDown(0.5);
+        doc.font('Helvetica-Bold').fontSize(9);
+        
+        // Cabeçalho da tabela
+        const headers = ['Descrição', 'Autor', 'Data'];
+        const colWidths = [290, 105, 100];
+        
+        let y = doc.y;
+        doc.rect(50, y, 495, 20).fillAndStroke('#e9ecef', '#dee2e6');
+        
+        let x = 50;
+        headers.forEach((header, i) => {
+          doc.text(header, x + 5, y + 6, { width: colWidths[i], align: 'left' });
+          x += colWidths[i];
+        });
+        
+        // Linhas da tabela
+        doc.font('Helvetica').fontSize(9);
         
         photos.forEach((photo, index) => {
+          y += 20;
+          
+          // Se estiver próximo do fim da página, adicionar nova página
+          if (y > 700) {
+            doc.addPage();
+            y = 50;
+            
+            // Repetir o cabeçalho na nova página
+            doc.font('Helvetica-Bold').fontSize(9);
+            doc.rect(50, y, 495, 20).fillAndStroke('#e9ecef', '#dee2e6');
+            
+            x = 50;
+            headers.forEach((header, i) => {
+              doc.text(header, x + 5, y + 6, { width: colWidths[i], align: 'left' });
+              x += colWidths[i];
+            });
+            
+            doc.font('Helvetica').fontSize(9);
+            y += 20;
+          }
+          
+          // Alternância de cores nas linhas
+          if (index % 2 === 0) {
+            doc.rect(50, y, 495, 20).fillAndStroke('#f8f9fa', '#dee2e6');
+          } else {
+            doc.rect(50, y, 495, 20).stroke('#dee2e6');
+          }
+          
           const caption = photo.caption || 'Sem legenda';
-          const userName = photo.userName ? ` (por ${photo.userName})` : '';
-          doc.text(`Foto ${index + 1}: ${caption}${userName}`);
+          const userName = photo.userName || 'Não especificado';
+          const photoDate = photo.createdAt ? formatDate(photo.createdAt.toString()) : 'Data não disponível';
+          
+          x = 50;
+          doc.text(`Foto ${index + 1}: ${caption}`, x + 5, y + 6, { width: colWidths[0] });
+          x += colWidths[0];
+          
+          doc.text(userName, x + 5, y + 6, { width: colWidths[1] });
+          x += colWidths[1];
+          
+          doc.text(photoDate, x + 5, y + 6, { width: colWidths[2] });
         });
         
         doc.moveDown(1);

@@ -5,8 +5,10 @@ import { Helmet } from "react-helmet";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { Project } from "@shared/schema";
-import { Loader2, Building2, FileText, Image } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Project, Rdo } from "@shared/schema";
+import { Loader2, Building2, FileText, Image, AlertTriangle, CloudRain, Cloud, Sun } from "lucide-react";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -15,6 +17,16 @@ export default function HomePage() {
   // Fetch projects
   const { data: projects, isLoading: isLoadingProjects } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
+  });
+
+  // Fetch recent reports
+  const { data: recentReports, isLoading: isLoadingReports } = useQuery({
+    queryKey: ["/api/reports/recent"],
+  });
+
+  // Fetch stats
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["/api/stats"],
   });
 
   // Get recent projects (top 3)
@@ -158,40 +170,65 @@ export default function HomePage() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Atividades Recentes</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>Relatórios Recentes</CardTitle>
+                <Link href="/reports">
+                  <a className="text-primary hover:text-blue-700 text-sm font-medium">Ver todos</a>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-primary mr-3">
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-700">RDO #042 foi criado</p>
-                    <p className="text-xs text-slate-500">Hoje às 17:45</p>
-                  </div>
+              {isLoadingReports ? (
+                <div className="py-8 flex justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-3">
-                    <Image className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-700">4 novas fotos adicionadas</p>
-                    <p className="text-xs text-slate-500">Hoje às 16:30</p>
-                  </div>
+              ) : recentReports && recentReports.length > 0 ? (
+                <div className="space-y-3">
+                  {recentReports.map((report: any) => (
+                    <div key={report.id} className="flex items-start p-3 rounded-lg border border-slate-200 hover:bg-slate-50">
+                      <div className="flex-shrink-0 h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <Link href={`/rdo/${report.id}`}>
+                          <a className="font-medium text-slate-800 hover:text-primary">
+                            RDO #{report.number} - {report.projectName}
+                          </a>
+                        </Link>
+                        <div className="flex items-center mt-1">
+                          <div className="flex space-x-1 mr-3">
+                            {report.weatherMorning === 'sunny' && <Sun className="h-4 w-4 text-amber-500" />}
+                            {report.weatherMorning === 'cloudy' && <Cloud className="h-4 w-4 text-slate-500" />}
+                            {report.weatherMorning === 'rainy' && <CloudRain className="h-4 w-4 text-blue-500" />}
+                            
+                            {report.weatherAfternoon === 'sunny' && <Sun className="h-4 w-4 text-amber-500" />}
+                            {report.weatherAfternoon === 'cloudy' && <Cloud className="h-4 w-4 text-slate-500" />}
+                            {report.weatherAfternoon === 'rainy' && <CloudRain className="h-4 w-4 text-blue-500" />}
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {report.date ? format(new Date(report.date), "dd 'de' MMMM", { locale: ptBR }) : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center px-2 py-1 rounded-full text-xs font-medium" 
+                        style={{ 
+                          backgroundColor: report.status === 'completed' ? '#e6f4ea' : '#fff3e0',
+                          color: report.status === 'completed' ? '#137333' : '#b06000'
+                        }}>
+                        {report.status === 'completed' ? 'Concluído' : 'Em andamento'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-700">Ocorrência registrada: Falta de material</p>
-                    <p className="text-xs text-slate-500">Hoje às 11:15</p>
-                  </div>
+              ) : (
+                <div className="py-8 text-center">
+                  <FileText className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                  <p className="text-slate-500">Nenhum relatório encontrado</p>
+                  <Link href="/new-rdo">
+                    <a className="mt-2 inline-block text-primary hover:text-blue-700">Criar um novo RDO</a>
+                  </Link>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>

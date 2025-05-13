@@ -96,9 +96,22 @@ export default function PhotoGalleryPage() {
     },
   });
 
-  // Agrupar fotos por data
+  // Agrupar fotos por data com tratamento de erros
   const photosByDate = (photos || []).reduce((acc: Record<string, Photo[]>, photo: Photo) => {
-    const date = photo.createdAt ? format(new Date(photo.createdAt), "yyyy-MM-dd") : "sem-data";
+    let date = "sem-data";
+    
+    try {
+      if (photo.createdAt) {
+        // Garantir que createdAt seja tratado como data
+        const photoDate = new Date(photo.createdAt);
+        if (!isNaN(photoDate.getTime())) {
+          date = format(photoDate, "yyyy-MM-dd");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao formatar data da foto:", error);
+    }
+    
     acc[date] = acc[date] || [];
     acc[date].push(photo);
     return acc;
@@ -106,6 +119,8 @@ export default function PhotoGalleryPage() {
 
   // Ordenar as datas do mais recente para o mais antigo
   const sortedDates = Object.keys(photosByDate).sort((a, b) => {
+    if (a === "sem-data") return 1;
+    if (b === "sem-data") return -1;
     return new Date(b).getTime() - new Date(a).getTime();
   });
 
@@ -199,14 +214,20 @@ export default function PhotoGalleryPage() {
               ))}
             </div>
           ) : sortedDates.length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {sortedDates.map((date) => (
-                <div key={date}>
-                  <h3 className="text-xl font-semibold text-slate-800 mb-4">
-                    {date !== "sem-data" 
-                      ? format(new Date(date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                      : "Data desconhecida"}
-                  </h3>
+                <div key={date} className="bg-white rounded-lg shadow-sm border border-slate-100 p-4">
+                  <div className="flex items-center mb-4">
+                    <Calendar className="h-5 w-5 text-primary mr-2" />
+                    <h3 className="text-xl font-semibold text-slate-800">
+                      {date !== "sem-data" 
+                        ? format(new Date(date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                        : "Data desconhecida"}
+                    </h3>
+                    <div className="ml-auto bg-slate-100 text-slate-700 rounded-full px-3 py-1 text-sm font-medium">
+                      {photosByDate[date].length} foto{photosByDate[date].length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {photosByDate[date].map((photo) => (
                       <PhotoCard 
