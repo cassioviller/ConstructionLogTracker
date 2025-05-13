@@ -11,6 +11,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -491,158 +498,142 @@ export default function ProjectDetailPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Últimos Relatórios</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isReportsLoading ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      RDO
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Data
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Clima
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Funcionários
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="py-3 px-4 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentReports && recentReports.length > 0 ? (
-                    recentReports.map((report) => (
-                      <tr key={report.id} className="hover:bg-slate-50">
-                        <td className="py-3 px-4 text-sm font-medium text-slate-900">#{report.number}</td>
-                        <td className="py-3 px-4 text-sm text-slate-500">
-                          {new Date(report.date).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-500">
-                          <div className="flex items-center space-x-1">
-                            {report.weatherMorning === 'sunny' && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 text-amber-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                                />
-                              </svg>
-                            )}
-                            {report.weatherMorning === 'cloudy' && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 text-slate-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
-                                />
-                              </svg>
-                            )}
-                            {report.weatherMorning === 'rainy' && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 text-blue-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                                />
-                              </svg>
-                            )}
-                            <span>
-                              {report.weatherMorning === 'sunny'
-                                ? 'Ensolarado'
-                                : report.weatherMorning === 'cloudy'
-                                ? 'Nublado'
-                                : report.weatherMorning === 'rainy'
-                                ? 'Chuvoso'
-                                : 'Variado'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-500">{report.workforceCount}</td>
-                        <td className="py-3 px-4 text-sm text-slate-500">
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                            {report.status === 'completed' ? 'Completo' : 'Pendente'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="link" 
-                              className="text-primary"
-                              onClick={() => navigate(`/project/${id}/rdo/${report.id}`)}
-                            >
-                              Visualizar
-                            </Button>
-                            <Button 
-                              variant="link" 
-                              className="text-slate-500"
-                              onClick={() => window.open(`/api/rdos/${report.id}/pdf`, '_blank')}
-                            >
-                              PDF
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500">
-                        Nenhum relatório encontrado
-                      </td>
-                    </tr>
+      {/* Dialog para editar projeto */}
+      <Dialog open={projectEditOpen} onOpenChange={setProjectEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Projeto</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do seu projeto. Clique em salvar quando terminar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...projectForm}>
+            <form onSubmit={projectForm.handleSubmit((data) => updateProjectMutation.mutate(data))} className="space-y-4">
+              <FormField
+                control={projectForm.control}
+                name="client"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cliente</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do cliente" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={projectForm.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Endereço do projeto" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={projectForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de Início</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="p-4 border-t border-slate-200 text-center">
-            <Button 
-              variant="link" 
-              className="text-primary hover:text-blue-700 font-medium"
-              onClick={() => navigate(`/project/${id}/rdo-history`)}
-            >
-              Ver todos os relatórios
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+                />
+                
+                <FormField
+                  control={projectForm.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de Término</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={projectForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status do projeto" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Em andamento</SelectItem>
+                        <SelectItem value="onhold">Em espera</SelectItem>
+                        <SelectItem value="completed">Concluído</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={projectForm.control}
+                name="responsible"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsável Técnico</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do responsável" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <DialogFooter className="pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setProjectEditOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateProjectMutation.isPending}
+                  className="ml-2"
+                >
+                  {updateProjectMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Salvar Alterações"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
       {/* Dialog para adicionar/editar membros da equipe */}
       <Dialog open={teamMemberDialogOpen} onOpenChange={setTeamMemberDialogOpen}>
         <DialogContent>
