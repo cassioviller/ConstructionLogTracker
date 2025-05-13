@@ -64,11 +64,10 @@ export default function NewRdoPage() {
       );
       
       // Removemos as fotos do objeto RDO para criar o relatório
+      // Isso é importante porque não queremos duplicar as fotos no banco de dados
       const rdoWithoutPhotos = {
         ...rdo,
-        // Guardamos apenas os IDs das fotos que serão enviadas separadamente
-        photoIds: photosToUpload?.map((p: any) => p.id) || [],
-        photos: [] // Removemos as fotos do objeto principal
+        photos: [] // Removemos completamente as fotos do objeto RDO
       };
       
       // Criar o RDO sem as fotos

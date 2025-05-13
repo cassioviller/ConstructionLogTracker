@@ -37,17 +37,11 @@ export function PhotosSection({ onChange, initialData = [] }: PhotosSectionProps
           // Convertemos o arquivo para base64 para enviar à API
           const base64 = await fileToBase64(file);
           
-          // Fazer upload da foto para o servidor
-          const formData = {
-            url: base64,
-            caption: file.name,
-            rdoId: -1, // Será atualizado quando o RDO for salvo
-          };
-          
           // Retornar um objeto com info temporária para o estado local
           return {
             id: photoId,
-            url: url,
+            url: base64, // Guardar o base64 para upload posterior
+            preview: url, // URL para exibir no navegador
             caption: file.name,
             originalFile: file, // Guarda o arquivo original para upload posterior
             needsUpload: true // Indica que esta foto precisa ser uploadada quando o RDO for criado
