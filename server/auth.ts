@@ -109,8 +109,25 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        console.error("Erro de autenticação:", err);
+        return next(err);
+      }
+      if (!user) {
+        console.log("Tentativa de login falhou:", req.body.username);
+        return res.status(401).json({ message: "Nome de usuário ou senha inválidos" });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Erro ao estabelecer sessão:", err);
+          return next(err);
+        }
+        console.log("Login bem-sucedido para:", user.username);
+        return res.status(200).json(user);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
