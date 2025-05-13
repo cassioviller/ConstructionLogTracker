@@ -6,7 +6,7 @@ type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 // Tabela de sessões para persistência de sessões no PostgreSQL
 export const sessions = pgTable(
-  "sessions",
+  "session",
   {
     sid: varchar("sid").primaryKey(),
     sess: jsonb("sess").notNull(),
