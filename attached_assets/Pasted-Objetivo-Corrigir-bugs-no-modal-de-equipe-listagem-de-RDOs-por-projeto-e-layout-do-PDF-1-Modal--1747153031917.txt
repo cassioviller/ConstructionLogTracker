@@ -1,0 +1,27 @@
+Objetivo: Corrigir bugs no modal de equipe, listagem de RDOs por projeto e layout do PDF.
+1. Modal "Adicionar Membros da Equipe" (Prioridade 1):
+Problema: Modal não lista membros da equipe do projeto, mesmo que existam.
+Ação:
+Frontend: Garanta que o projeto_id correto seja enviado na API call ao abrir o modal.
+Backend: Endpoint da API deve filtrar membros da equipe no PostgreSQL estritamente pelo projeto_id correto (Ex: SELECT id, nome, funcao FROM membros_equipe WHERE projeto_id = $1 ORDER BY nome ASC;).
+Modal: Renderizar a lista de membros (Nome, Função, checkbox) retornada pela API.
+Critério: Modal lista corretamente membros do projeto específico do RDO.
+2. Listagem de RDOs no Histórico do Projeto (Prioridade 1):
+Problema: RDO salvo aparece em "Relatórios" (geral), mas não no "Histórico de Relatórios" do projeto específico.
+Ação:
+Salvar RDO: Ao salvar, garanta que o id do projeto seja gravado corretamente na tabela de RDOs.
+Backend (Histórico Projeto): Endpoint da API deve buscar RDOs filtrando pelo projeto_id do projeto visualizado (Ex: SELECT id, numero_rdo, data_rdo FROM rdos WHERE projeto_id = $1 ORDER BY data_rdo DESC;).
+Frontend: Atualizar lista no frontend ao carregar a página do projeto ou salvar RDO.
+Critério: RDOs aparecem corretamente no histórico do projeto correspondente.
+3. PDF do RDO - Layout e Conteúdo (Prioridade 2):
+Problema: PDF com formatação inadequada.
+Ação:
+Layout Vertical: Estruturar PDF com seções uma abaixo da outra: Resumo, Mão de Obra, Equipamentos, Atividades, Ocorrências, Fotos, Comentários.
+Template Profissional:
+Cabeçalho: Logo/Nome Empresa, Título "Relatório Diário de Obra", Nº RDO, Obra, Cliente, Local, Data.
+Seções: Títulos claros. Mão de Obra/Equipamentos em tabelas. Textos legíveis.
+Fotos: Incorporar imagens salvas com legendas (2-3 por linha, otimizadas).
+Rodapé: Paginação (X de Y), Data Emissão.
+Geração (Node.js): Usar biblioteca como pdfmake ou puppeteer (com HTML template) para gerar o PDF com dados dinâmicos.
+Critério: PDF gerado com todas as seções, layout profissional vertical, dados corretos (incluindo fotos).
+Instruções Adicionais: Revisar código das áreas afetadas. Priorizar Seção 1 e 2. Testar exaustivamente.

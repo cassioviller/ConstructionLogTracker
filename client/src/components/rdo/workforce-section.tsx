@@ -62,7 +62,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
 
   // Busca a equipe do projeto
   const { data: teamMembers, isLoading: isTeamLoading } = useQuery({
-    queryKey: [`/api/projects/${effectiveProjectId}/team-members`],
+    queryKey: [`/api/projects/${effectiveProjectId}/team`],
     enabled: !!effectiveProjectId && isTeamDialogOpen,
   });
 
