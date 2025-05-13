@@ -1,0 +1,41 @@
+Seção 1: Correção de Bugs de Roteamento e Acesso a Relatórios (Prioridade Alta)
+Problema de 404 em Relatórios:
+Sintoma: Ao clicar no item de menu "Relatórios" ou ao tentar acessar a visualização de um RDO específico (por exemplo, através do link "Visualizar" no Dashboard ou na lista de "Últimos Relatórios" na página do projeto), o sistema está retornando um erro "404 Page Not Found" (conforme imagem image (2).png fornecida).
+Ação Requerida: Investigue e corrija as rotas no frontend (provavelmente React Router) e no backend (Node.js/Express) para garantir que:
+A página principal de listagem de relatórios (acessada pelo menu "Relatórios") seja carregada corretamente, exibindo todos os RDOs de todas as obras ou de uma obra selecionada.
+Cada RDO individual possa ser acessado e visualizado corretamente através de seu link/botão específico.
+Na página de detalhes de um projeto (como em image (1).png), onde aparece "1 RDOs criados" e o link "Ver todos os relatórios", este link deve levar à lista de RDOs daquele projeto específico, e cada RDO listado deve ser clicável para visualização individual.
+Seção 2: Implementação e Funcionalidade do Módulo de Equipe (Prioridade Alta)
+Atualmente, na página de detalhes do projeto (imagem image (1).png), a seção "Equipe" mostra "Nenhum membro na equipe" e um botão "Adicionar membro" que não está funcional. Precisamos implementar esta funcionalidade.
+Habilitar Cadastro de Equipe por Projeto:
+Interface: Na página de detalhes de cada projeto, a seção "Equipe" deve permitir adicionar, visualizar, editar e remover membros da equipe associados àquele projeto.
+Campos para Cadastro de Membro da Equipe: Ao clicar em "Adicionar membro" (ou um botão similar como "Gerenciar Equipe" e depois "Adicionar Novo Membro"), um formulário ou modal deve surgir permitindo cadastrar:
+Nome Completo do Funcionário
+Função (ex: Engenheiro Civil, Mestre de Obras, Pedreiro, Servente, Eletricista, Encanador)
+Empresa/Terceirizado (Opcional)
+Contato (Telefone/Email - Opcional)
+Observações (Opcional)
+Visualização: A lista de membros da equipe cadastrados para o projeto deve ser exibida claramente na seção "Equipe".
+Ações: Para cada membro listado, deve haver opções para Editar suas informações ou Removê-lo da equipe do projeto.
+Persistência: Todas as informações da equipe devem ser salvas no banco de dados PostgreSQL, associadas ao respectivo projeto.
+Seção 3: Melhoria no Lançamento de Mão de Obra no RDO (Prioridade Alta)
+Atualmente, na tela de criação/edição de um RDO (imagem image.png), a seção "Mão de Obra" está vazia e apenas com o botão "+ Adicionar Função". Precisamos torná-la mais dinâmica e integrada com o módulo de Equipe.
+Adicionar Equipe/Membros Pré-Cadastrados ao RDO:
+Funcionalidade: Dentro da seção "Mão de Obra" do RDO, além do botão "+ Adicionar Função" (que deve ser mantido para adições manuais avulsas), adicione um botão ou opção como "Adicionar da Equipe do Projeto".
+Interface de Seleção: Ao clicar em "Adicionar da Equipe do Projeto", deve surgir uma lista/modal com todos os membros da equipe previamente cadastrados para aquele projeto (conforme Seção 2). O usuário deve poder selecionar múltiplos membros (ou a equipe inteira) para adicioná-los de uma vez à lista de mão de obra do RDO daquele dia.
+Informações Puxadas: Ao adicionar um membro da equipe, seu Nome e Função devem ser preenchidos automaticamente nos campos do RDO.
+Edição Individual da Mão de Obra no RDO:
+Flexibilidade: Uma vez que os membros da equipe (ou funções manuais) são adicionados à lista de mão de obra do RDO, o usuário deve poder editar individualmente cada entrada para aquele RDO específico. Campos editáveis por entrada no RDO:
+Quantidade (se aplicável, ex: para funções genéricas como "Servente" onde se adicionou manualmente)
+Horário de Entrada (opcional)
+Horário de Saída (opcional)
+Intervalos (opcional)
+Observações específicas para aquele funcionário/função naquele dia.
+Remoção do RDO: Permitir remover um funcionário/função da lista de mão de obra daquele RDO específico sem removê-lo do cadastro geral da equipe do projeto.
+Manter Adição Manual de Função:
+O botão existente "+ Adicionar Função" deve continuar permitindo que o usuário adicione manualmente uma função (ex: "Consultor Externo"), a quantidade de pessoas para essa função, e os demais campos (horários, observações) para situações onde o profissional não está na equipe fixa do projeto.
+Instruções Adicionais:
+Garanta que todas as novas funcionalidades e correções sejam integradas de forma coesa com a interface existente.
+Todas as informações de equipe e os detalhes de mão de obra nos RDOs devem ser salvos e recuperados corretamente do banco de dados PostgreSQL.
+Mantenha a responsividade da aplicação para desktops, tablets e smartphones.
+Priorize a clareza e a facilidade de uso para o usuário final.
