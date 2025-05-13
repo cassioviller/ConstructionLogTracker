@@ -163,8 +163,12 @@ export type CommentItem = {
 export type PhotoItem = {
   id: string;
   url: string;
+  preview?: string;
   caption?: string;
   createdBy?: number;
+  userName?: string;
+  originalFile?: File;
+  needsUpload?: boolean;
 };
 
 // Team Members table schema

@@ -102,7 +102,7 @@ export function PhotosSection({ onChange, initialData = [] }: PhotosSectionProps
                 <div key={photo.id} className="relative group bg-white rounded-md overflow-hidden border border-slate-200">
                   <div className="relative h-48">
                     <img
-                      src={photo.url}
+                      src={photo.preview || photo.url}
                       alt={photo.caption || "Foto da obra"}
                       className="w-full h-full object-cover"
                     />
@@ -140,7 +140,7 @@ export function PhotosSection({ onChange, initialData = [] }: PhotosSectionProps
             {previewImage && (
               <div className="flex items-center justify-center h-[80vh]">
                 <img 
-                  src={previewImage.url} 
+                  src={previewImage.preview || previewImage.url} 
                   alt={previewImage.caption || "Foto da obra"} 
                   className="max-h-full max-w-full object-contain"
                 />

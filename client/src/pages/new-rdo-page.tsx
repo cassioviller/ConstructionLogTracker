@@ -78,14 +78,14 @@ export default function NewRdoPage() {
       if (photosToUpload && photosToUpload.length > 0) {
         const photoUploadPromises = photosToUpload.map(async (photo: any) => {
           try {
-            // Criamos o objeto para enviar à API de fotos
+            // Usar o base64 da foto para enviar ao servidor
             const photoData = {
-              url: photo.url,
+              url: photo.url, // Este já contém o base64 da imagem
               caption: photo.caption,
               rdoId: createdRdo.id
             };
             
-            // Enviar a foto
+            // Enviar a foto para a API
             const photoRes = await apiRequest("POST", "/api/photos", photoData);
             return await photoRes.json();
           } catch (error) {
