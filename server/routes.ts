@@ -246,6 +246,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rotas de depuração (temporárias)
+  app.get("/api/debug/setup", async (req, res) => {
+    try {
+      // Verificar se já existe o usuário 'admin'
+      let admin = await storage.getUserByUsername("admin");
+      
+      // Se não existir, criar usuário admin
+      if (!admin) {
+        admin = await storage.createUser({
+          username: "admin",
+          password: "password", // Não precisamos encriptar na rota de debug
+          name: "Administrador",
+          jobTitle: "Administrador",
+          company: "Empresa Teste"
+        });
+        console.log("Usuário admin criado:", admin);
+      } else {
+        console.log("Usuário admin já existe:", admin);
+      }
+      
+      // Criar um projeto de teste, se não houver nenhum
+      const projects = await storage.getProjects(admin.id);
+      let project;
+      
+      if (projects.length === 0) {
+        project = await storage.createProject({
+          name: "Projeto Teste",
+          client: "Cliente Teste",
+          location: "Local Teste",
+          startDate: "2023-01-01",
+          endDate: "2023-12-31",
+          description: "Projeto de teste para depuração",
+          status: "Em andamento",
+          createdBy: admin.id
+        });
+        console.log("Projeto de teste criado:", project);
+      } else {
+        project = projects[0];
+        console.log("Projeto já existe:", project);
+      }
+      
+      // Criar um RDO de teste, se não houver nenhum
+      const rdoNumber = await storage.getNextRdoNumber(project.id);
+      await storage.createRdo({
+        projectId: project.id,
+        date: new Date().toISOString().split('T')[0],
+        number: rdoNumber,
+        weatherMorning: "Ensolarado",
+        weatherAfternoon: "Ensolarado",
+        weatherNight: "Limpo",
+        weatherNotes: "Tempo estável",
+        workforce: JSON.stringify([{ id: "1", role: "Pedreiro", quantity: 5, startTime: "08:00", endTime: "17:00" }]),
+        equipment: JSON.stringify([{ id: "1", name: "Betoneira", quantity: 1, hours: 8 }]),
+        activities: JSON.stringify([{ id: "1", description: "Concretagem", completion: 80 }]),
+        occurrences: JSON.stringify([{ id: "1", title: "Atraso material", description: "Atraso na entrega de material", time: "10:00", tags: ["atraso", "material"] }]),
+        comments: JSON.stringify([{ id: "1", content: "Trabalho realizado conforme cronograma", userId: admin.id, userName: admin.name }]),
+        createdBy: admin.id,
+        status: "Finalizado"
+      });
+      
+      res.json({
+        message: "Ambiente de teste configurado com sucesso",
+        admin,
+        project,
+        rdoCount: (await storage.getRdos(project.id, {})).items.length
+      });
+    } catch (error) {
+      console.error("Erro na configuração do ambiente de teste:", error);
+      res.status(500).json({ message: "Erro na configuração do ambiente de teste", error: String(error) });
+    }
+  });
+  
+  // Rota de depuração para verificar RDOs diretamente (temporária)
+  app.get("/api/debug/rdos", async (req, res) => {
+    try {
+      const rdosMap = storage.getAllRdosForDebug();
+      const rdos = Array.from(rdosMap.entries()).map(([id, rdo]) => ({
+        id,
+        projectId: rdo.projectId,
+        number: rdo.number,
+        date: rdo.date,
+        status: rdo.status
+      }));
+      res.json({ count: rdos.length, rdos });
+    } catch (error) {
+      console.error("Erro ao depurar RDOs:", error);
+      res.status(500).json({ message: "Erro ao depurar RDOs" });
+    }
+  });
+
   // Recent reports for dashboard
   app.get("/api/recent-reports", requireAuth, async (req, res) => {
     try {
