@@ -278,7 +278,9 @@ export default function ProjectDetailPage() {
               </Link>
             </div>
             <div className="text-center py-6">
-              <span className="text-4xl font-bold text-slate-800">{project.reportCount || 0}</span>
+              <span className="text-4xl font-bold text-slate-800">
+                {recentReports && Array.isArray(recentReports.items) ? recentReports.items.length : 0}
+              </span>
               <p className="text-slate-500">RDOs criados</p>
             </div>
             <div className="border-t border-slate-200 pt-4">
