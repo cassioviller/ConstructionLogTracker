@@ -37,6 +37,7 @@ export interface IStorage {
   
   // RDOs
   getRdos(projectId: number, options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }>;
+  getAllRdos(options: PaginationOptions): Promise<{ items: Rdo[], total: number, totalPages: number }>;
   getRdo(id: number): Promise<Rdo | undefined>;
   getNextRdoNumber(projectId: number): Promise<number>;
   createRdo(rdo: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo>;
