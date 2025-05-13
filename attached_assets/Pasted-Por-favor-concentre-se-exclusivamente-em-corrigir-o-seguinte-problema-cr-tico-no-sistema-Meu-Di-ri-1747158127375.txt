@@ -1,0 +1,15 @@
+Por favor, concentre-se exclusivamente em corrigir o seguinte problema crítico no sistema 'Meu Diário de Obra Pro', relacionado ao salvamento e listagem dos Relatórios Diários de Obra (RDOs):
+Problema Principal: RDOs Não São Exibidos no Histórico do Projeto Correto
+Cenário Atual: Ao criar um RDO, ele parece ser salvo em uma lista geral de "Todos os Relatórios Diários de Obra", mas não aparece na seção "Histórico de Relatórios" dentro da página do projeto específico ao qual deveria estar vinculado.
+Impacto: Isso impede o acompanhamento correto das obras, pois os relatórios não estão organizados e acessíveis no contexto de cada projeto.
+Solicitação de Correção (Refazer se Necessário):
+Salvar RDOs DENTRO de Cada Projeto:
+Lógica de Salvamento: A principal mudança necessária é garantir que, ao criar um novo RDO, ele seja diretamente associado e salvo "dentro" do contexto do projeto selecionado. Isso significa que deve haver um vínculo claro e forte no banco de dados (PostgreSQL) entre cada RDO e o ID do seu respectivo projeto.
+Interface: Ao criar um RDO, o sistema já deve saber a qual projeto ele pertence (provavelmente o usuário estará na página do projeto ou o selecionará). Essa informação de ID do Projeto deve ser obrigatoriamente registrada junto com os dados do RDO.
+Listagem de RDOs no Histórico do Projeto:
+Consulta Específica: A seção "Histórico de Relatórios" na página de um projeto deve buscar e listar apenas os RDOs que pertencem àquele projeto específico, utilizando o ID do Projeto como filtro principal na consulta ao banco de dados.
+Listagem Geral "Todos os Relatórios Diários de Obra":
+Consulta Abrangente: A página ou seção "Todos os Relatórios Diários de Obra" deve, então, fazer uma requisição que busque todos os RDOs de todos os projetos e os exiba. Esta visualização é secundária à correta exibição dos RDOs dentro de cada projeto.
+Consideração Importante:
+Refazer do Zero (Se Necessário): Dada a persistência e criticidade deste problema, estou aberto à possibilidade de você refazer completamente a lógica de criação, salvamento e listagem de RDOs para garantir que funcione conforme descrito acima. O objetivo é ter uma solução robusta e correta.
+Por favor, foque em implementar esta estrutura de forma que os RDOs sejam primeiramente vinculados e exibidos corretamente dentro de seus respectivos projetos. A funcionalidade de "Todos os Relatórios" deve ser uma consequência dessa organização correta.
