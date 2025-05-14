@@ -195,7 +195,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
     <Card>
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium leading-6 text-slate-900">Mão de Obra</h3>
+          <h3 className="text-lg font-medium leading-6 text-slate-900">Colaboradores</h3>
           <div className="flex space-x-2">
             {/* Botão para adicionar membros da equipe do projeto */}
             <Dialog open={isTeamDialogOpen} onOpenChange={handleTeamDialogOpenChange}>
@@ -209,7 +209,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
                 <DialogHeader>
                   <DialogTitle>Adicionar Colaboradores</DialogTitle>
                   <DialogDescription>
-                    Selecione os colaboradores do projeto que deseja adicionar como mão de obra neste relatório.
+                    Selecione os colaboradores do projeto que deseja adicionar neste relatório.
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -219,7 +219,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
                   </div>
                 ) : !teamMembers || teamMembers.length === 0 ? (
                   <div className="text-center py-6">
-                    <p className="text-slate-500">Nenhum membro da equipe cadastrado neste projeto.</p>
+                    <p className="text-slate-500">Nenhum colaborador cadastrado neste projeto.</p>
                   </div>
                 ) : (
                   <div className="py-4">
@@ -406,7 +406,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
             </table>
           ) : (
             <div className="text-center py-4 text-slate-500">
-              Nenhuma mão de obra adicionada. Utilize os botões acima para adicionar.
+              Nenhum colaborador adicionado. Utilize os botões acima para adicionar.
             </div>
           )}
         </div>
