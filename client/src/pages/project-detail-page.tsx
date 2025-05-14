@@ -434,16 +434,8 @@ export default function ProjectDetailPage() {
 
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">Colaboradores</h2>
-              <Button 
-                variant="link" 
-                className="text-primary hover:text-blue-700 text-sm font-medium p-0"
-                onClick={() => handleOpenTeamMemberDialog()}
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                Adicionar Colaborador
-              </Button>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-slate-800">Equipe</h2>
             </div>
             <div className="space-y-4">
               {isTeamLoading ? (
@@ -493,14 +485,14 @@ export default function ProjectDetailPage() {
               ) : (
                 <div className="text-center py-8 border border-dashed border-border rounded-lg">
                   <Users className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">Nenhum colaborador no projeto.</p>
+                  <p className="text-sm text-slate-500">Nenhum membro na equipe do projeto.</p>
                   <Button 
                     variant="outline"
                     className="mt-4"
                     onClick={() => handleOpenTeamMemberDialog()}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar primeiro colaborador
+                    Adicionar colaborador
                   </Button>
                 </div>
               )}
