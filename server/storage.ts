@@ -449,6 +449,28 @@ export class MemStorage implements IStorage {
     return updatedRdo;
   }
   
+  async deleteRdo(id: number): Promise<boolean> {
+    const exists = this.rdos.has(id);
+    if (exists) {
+      console.log(`Excluindo RDO com ID ${id}`);
+      this.rdos.delete(id);
+      
+      // Também excluímos as fotos associadas a este RDO
+      const photosToDelete = Array.from(this.photos.values())
+        .filter(photo => photo.rdoId === id)
+        .map(photo => photo.id);
+      
+      console.log(`Excluindo ${photosToDelete.length} fotos associadas ao RDO ${id}`);
+      photosToDelete.forEach(photoId => {
+        this.photos.delete(photoId);
+      });
+      
+      return true;
+    }
+    console.log(`RDO com ID ${id} não encontrado para exclusão`);
+    return false;
+  }
+  
   // Método de depuração para obter todos os RDOs diretamente
   async getAllRdosForDebug(): Promise<Map<number, Rdo>> {
     return Promise.resolve(this.rdos);
@@ -972,6 +994,37 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Erro ao atualizar RDO:", error);
       return undefined;
+    }
+  }
+  
+  async deleteRdo(id: number): Promise<boolean> {
+    try {
+      console.log(`Excluindo RDO ID: ${id}`);
+      
+      // Primeiro excluir as fotos associadas ao RDO
+      const photos = await this.getPhotosByRdoId(id);
+      console.log(`Encontradas ${photos.length} fotos para excluir do RDO ${id}`);
+      
+      if (photos.length > 0) {
+        await db.delete(photos)
+          .where(eq(photos.rdoId, id));
+        console.log(`Fotos do RDO ${id} excluídas com sucesso`);
+      }
+      
+      // Depois excluir o RDO
+      const result = await db.delete(rdos)
+        .where(eq(rdos.id, id))
+        .returning();
+      
+      const success = result.length > 0;
+      console.log(success 
+        ? `RDO ${id} excluído com sucesso` 
+        : `RDO ${id} não encontrado para exclusão`);
+      
+      return success;
+    } catch (error) {
+      console.error(`Erro ao excluir RDO ${id}:`, error);
+      return false;
     }
   }
 

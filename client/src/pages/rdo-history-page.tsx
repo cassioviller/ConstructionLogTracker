@@ -314,10 +314,39 @@ export default function RdoHistoryPage() {
                               variant="outline" 
                               size="sm" 
                               className="h-8 hover:text-red-600 hover:border-red-600"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (confirm(`Tem certeza que deseja excluir o RDO #${rdo.number}?`)) {
-                                  // Aqui será implementada a lógica de exclusão
-                                  console.log(`Excluir RDO ${rdo.id}`);
+                                  setIsLoading(true);
+                                  try {
+                                    const response = await fetch(`/api/rdos/${rdo.id}`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                        'Content-Type': 'application/json'
+                                      }
+                                    });
+                                    
+                                    if (!response.ok) {
+                                      throw new Error('Erro ao excluir RDO');
+                                    }
+                                    
+                                    toast({
+                                      title: "RDO excluído",
+                                      description: `RDO #${rdo.number} excluído com sucesso`,
+                                      variant: "success"
+                                    });
+                                    
+                                    // Recarregar a lista de RDOs
+                                    fetchReports(currentPage);
+                                  } catch (error) {
+                                    console.error('Erro ao excluir RDO:', error);
+                                    toast({
+                                      title: "Erro",
+                                      description: "Não foi possível excluir o RDO",
+                                      variant: "destructive"
+                                    });
+                                  } finally {
+                                    setIsLoading(false);
+                                  }
                                 }
                               }}
                             >

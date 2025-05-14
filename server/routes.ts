@@ -245,6 +245,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para atualizar um RDO
+  app.put("/api/rdos/:id", requireAuth, async (req, res) => {
+    try {
+      const rdoId = parseInt(req.params.id);
+      
+      // Verificar se o RDO existe
+      const existingRdo = await storage.getRdo(rdoId);
+      if (!existingRdo) {
+        return res.status(404).json({ message: "RDO não encontrado" });
+      }
+      
+      // Parse e validação dos dados
+      const rdoData = insertRdoSchema.partial().parse(req.body);
+      
+      // Atualizar RDO
+      const updatedRdo = await storage.updateRdo(rdoId, rdoData);
+      
+      if (!updatedRdo) {
+        return res.status(500).json({ message: "Erro ao atualizar RDO" });
+      }
+      
+      console.log(`RDO ${rdoId} atualizado com sucesso`);
+      res.json(updatedRdo);
+    } catch (error) {
+      console.error("Erro ao atualizar RDO:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : "Erro ao atualizar RDO";
+      res.status(500).json({ message: errorMessage });
+    }
+  });
+  
+  // Rota para excluir um RDO
+  app.delete("/api/rdos/:id", requireAuth, async (req, res) => {
+    try {
+      const rdoId = parseInt(req.params.id);
+      
+      // Verificar se o RDO existe
+      const existingRdo = await storage.getRdo(rdoId);
+      if (!existingRdo) {
+        return res.status(404).json({ message: "RDO não encontrado" });
+      }
+      
+      // Excluir o RDO
+      const success = await storage.deleteRdo(rdoId);
+      
+      if (success) {
+        console.log(`RDO ${rdoId} excluído com sucesso`);
+        res.status(200).json({ message: "RDO excluído com sucesso" });
+      } else {
+        console.error(`Falha ao excluir RDO ${rdoId}`);
+        res.status(500).json({ message: "Falha ao excluir RDO" });
+      }
+    } catch (error) {
+      console.error("Erro ao excluir RDO:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro ao excluir RDO";
+      res.status(500).json({ message: errorMessage });
+    }
+  });
+  
   // Rota para obter fotos de um RDO específico
   app.get("/api/rdos/:id/photos", requireAuth, async (req, res) => {
     try {
