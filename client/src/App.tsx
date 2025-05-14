@@ -10,6 +10,7 @@ import DashboardPage from "@/pages/dashboard-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
 import NewRdoPage from "@/pages/new-rdo-page";
+import EditRdoPage from "@/pages/edit-rdo-page";
 import RdoHistoryPage from "@/pages/rdo-history-page";
 import RdoDetailPage from "@/pages/rdo-detail-page";
 import PhotosPage from "@/pages/photos-page";
@@ -25,6 +26,7 @@ function Router() {
       <ProtectedRoute path="/project/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/project/:id/new-rdo" component={NewRdoPage} />
       <ProtectedRoute path="/project/:id/rdo-history" component={RdoHistoryPage} />
+      <ProtectedRoute path="/project/:id/rdo/:rdoId/edit" component={EditRdoPage} />
       <ProtectedRoute path="/project/:id/rdo/:rdoId" component={RdoDetailPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/photos" component={PhotosPage} />

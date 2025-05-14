@@ -23,6 +23,7 @@ import {
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RdoHistoryPage() {
   const { id: projectId } = useParams();
@@ -30,6 +31,8 @@ export default function RdoHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [monthFilter, setMonthFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   // Fetch project info
   const { data: project, isLoading: isProjectLoading } = useQuery({
