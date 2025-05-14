@@ -12,7 +12,7 @@ import { ActivitiesSection } from "@/components/rdo/activities-section";
 import { OccurrencesSection } from "@/components/rdo/occurrences-section";
 import { PhotosSection } from "@/components/rdo/photos-section";
 import { CommentsSection } from "@/components/rdo/comments-section";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,11 @@ import { useState } from "react";
 import { insertRdoSchema } from "@shared/schema";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button as ButtonUI } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Create a schema for the complete RDO form
 const rdoFormSchema = insertRdoSchema;
@@ -31,6 +36,7 @@ export default function NewRdoPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const today = new Date();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(today);
   const [formData, setFormData] = useState<RdoFormData>({
     projectId: parseInt(projectId),
     date: format(today, "yyyy-MM-dd"),
@@ -45,6 +51,17 @@ export default function NewRdoPage() {
     photos: [],
     comments: [],
   });
+  
+  // Função para atualizar a data no formData quando o usuário seleciona uma data
+  const onDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setFormData(prev => ({
+        ...prev,
+        date: format(date, "yyyy-MM-dd")
+      }));
+    }
+  };
 
   // Fetch project info
   const { data: project, isLoading: isProjectLoading } = useQuery({
@@ -212,9 +229,30 @@ export default function NewRdoPage() {
           <h2 className="text-lg font-semibold text-slate-800">Informações do RDO</h2>
           <div>
             <span className="text-slate-500 text-sm">Data:</span>
-            <span className="text-slate-800 text-sm font-medium ml-1">
-              {format(today, "dd/MM/yyyy", { locale: ptBR })}
-            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <ButtonUI
+                  variant="outline"
+                  className="ml-2 h-9 pl-3 text-left font-normal"
+                >
+                  {selectedDate ? (
+                    format(selectedDate, "dd/MM/yyyy", { locale: ptBR })
+                  ) : (
+                    <span>Selecione uma data</span>
+                  )}
+                  <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                </ButtonUI>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={onDateChange}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
         <CardContent>
