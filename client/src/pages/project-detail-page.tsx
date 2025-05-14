@@ -24,12 +24,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-// Schema para validação do formulário de membro da equipe
+// Schema para validação do formulário de colaborador
 const teamMemberSchema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório" }),
   role: z.string().min(1, { message: "Função é obrigatória" }),
-  company: z.string().optional(),
-  contact: z.string().optional(),
+  startTime: z.string().default("07:12"),
+  endTime: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -78,14 +78,14 @@ export default function ProjectDetailPage() {
     },
   });
   
-  // Formulário para adicionar/editar membro da equipe
+  // Formulário para adicionar/editar colaborador
   const form = useForm<TeamMemberFormValues>({
     resolver: zodResolver(teamMemberSchema),
     defaultValues: {
       name: "",
       role: "",
-      company: "",
-      contact: "",
+      startTime: "07:12",
+      endTime: "",
       notes: ""
     },
   });
