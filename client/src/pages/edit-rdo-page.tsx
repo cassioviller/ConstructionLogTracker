@@ -32,14 +32,15 @@ export default function EditRdoPage() {
   const { user } = useAuth();
   const [formData, setFormData] = useState<RdoFormData | null>(null);
 
-  // Fetch project info
-  const { data: project, isLoading: isProjectLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}`],
-  });
-
-  // Fetch RDO data
+  // Fetch RDO data first to get the correct projectId
   const { data: rdo, isLoading: isRdoLoading } = useQuery({
     queryKey: [`/api/rdos/${rdoId}`]
+  });
+  
+  // Depois que tivermos o RDO, usamos o projectId dele para buscar o projeto
+  const { data: project, isLoading: isProjectLoading } = useQuery({
+    queryKey: [`/api/projects/${rdo?.projectId || projectId}`],
+    enabled: !!rdo || !!projectId,
   });
 
   // Quando os dados do RDO chegarem, alimentamos o estado do formulário

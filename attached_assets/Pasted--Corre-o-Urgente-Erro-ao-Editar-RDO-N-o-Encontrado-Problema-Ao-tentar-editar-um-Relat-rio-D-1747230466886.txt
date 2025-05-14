@@ -1,0 +1,20 @@
+. Correção Urgente: Erro ao Editar RDO ("Não Encontrado")
+Problema: Ao tentar editar um Relatório Diário de Obra (RDO) existente (clicando no botão "Editar" na lista de histórico de relatórios), o sistema exibe uma página ou mensagem de erro indicando "RDO ou projeto não encontrado".
+Solicitação: Investigue e corrija a causa raiz deste erro. Garanta que, ao clicar em "Editar" para um RDO específico, o sistema localize corretamente o RDO e carregue seus dados no formulário de edição, permitindo que o usuário modifique e salve as alterações com sucesso. Verifique as rotas, as consultas ao banco de dados (PostgreSQL) e qualquer lógica envolvida na recuperação de um RDO para edição.
+2. Ajustes na Seção "Equipe" na Página de Detalhes do Projeto:
+Título da Seção:
+O título principal desta seção, que atualmente pode estar como "Colaboradores", deve ser alterado para exibir exatamente: "Equipe".
+Botão "+ Adicionar Colaborador":
+Remoção de Botão Duplicado: Atualmente, podem existir dois botões para "Adicionar Colaborador" nesta seção. O botão que aparece na parte superior da seção, geralmente ao lado do título, deve ser removido.
+Botão Inferior (Principal): O único botão para adicionar colaboradores nesta seção deve ser aquele localizado abaixo da lista de colaboradores (ou abaixo da mensagem "Nenhum colaborador adicionado...").
+Texto do Botão Inferior: O texto deste botão inferior deve ser exatamente: "+ Adicionar Colaborador".
+Layout e Espaçamento: Garanta que haja um espaçamento visual adequado entre o título da seção ("Equipe") e o conteúdo abaixo (a lista de colaboradores e o botão "+ Adicionar Colaborador" inferior). Evite que os elementos fiquem muito próximos ou sobrepostos.
+Modal de Adição: Confirme que o botão "+ Adicionar Colaborador" (o inferior, agora único) abre o modal intitulado "Adicionar Colaborador" com os campos corretos e já especificados: Nome, Função, Horário de Entrada (padrão 07:12, editável), Horário de Saída (editável), Observação.
+3. Ajuste no Botão da Seção "Mão de Obra" Dentro de um RDO:
+Localização: Ao criar ou editar um RDO, na seção destinada ao registro de "Mão de Obra".
+Texto do Botão: O botão utilizado para adicionar pessoas à lista de mão de obra do RDO deve ter seu texto alterado para exibir exatamente: "+ Adicionar Equipe".
+Ação do Botão (Modal): É crucial entender que, embora o botão seja rotulado como "+ Adicionar Equipe", ao ser clicado, ele deve abrir o mesmo modal individual que é usado em outras partes do sistema para adicionar um único colaborador. Ou seja, ele deve abrir o modal intitulado "Adicionar Colaborador", contendo os campos: Nome, Função, Horário de Entrada (padrão 07:12, editável), Horário de Saída (editável), Observação.
+Reiteração de Instruções Anteriores Importantes:
+Modal Unificado "Adicionar Colaborador": Lembre-se que o modal "Adicionar Colaborador" (com os campos Nome, Função, Horário de Entrada padrão 07:12, Horário de Saída, Observação) deve ser o padrão para adicionar qualquer pessoa, seja à equipe do projeto ou à mão de obra de um RDO. O campo "Quantidade" não deve existir neste modal.
+Consistência da Nomenclatura "Colaborador": O termo "Colaborador" deve ser usado para se referir aos indivíduos. "Equipe" pode ser usado como um agrupamento ou título de seção, como especificado acima.
+Campos Não Obrigatórios: Ao adicionar ou editar um colaborador, o preenchimento de todos os campos não é obrigatório para salvar. Nome e Função podem ser considerados os mínimos.
