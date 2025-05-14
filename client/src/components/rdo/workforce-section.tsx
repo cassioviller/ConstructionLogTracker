@@ -34,10 +34,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { Loader2 } from 'lucide-react';
 
 const workforceItemSchema = z.object({
+  name: z.string().min(1, { message: "Nome é obrigatório" }),
   role: z.string().min(1, { message: "Função é obrigatória" }),
-  quantity: z.number().min(1, { message: "Quantidade deve ser pelo menos 1" }),
-  startTime: z.string().min(1, { message: "Horário de entrada é obrigatório" }),
-  endTime: z.string().min(1, { message: "Horário de saída é obrigatório" }),
+  startTime: z.string().default("07:12"),
+  endTime: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -69,10 +69,10 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
   const form = useForm<WorkforceFormValues>({
     resolver: zodResolver(workforceItemSchema),
     defaultValues: {
+      name: "",
       role: "",
-      quantity: 1,
-      startTime: "07:00",
-      endTime: "17:00",
+      startTime: "07:12",
+      endTime: "",
       notes: "",
     },
   });
@@ -178,11 +178,11 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
     // Convert selected team members to workforce items
     const newWorkforceItems: WorkforceItem[] = selectedMembers.map((member: TeamMember) => ({
       id: uuidv4(),
+      name: member.name,
       role: member.role,
-      quantity: 1,
-      startTime: "07:00",
-      endTime: "17:00",
-      notes: `${member.name}${member.company ? ` - ${member.company}` : ""}`
+      startTime: "07:12",
+      endTime: "",
+      notes: ""
     }));
     
     const updatedWorkforce = [...workforce, ...newWorkforceItems];
@@ -202,14 +202,14 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
               <DialogTrigger asChild>
                 <Button size="sm" className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  Adicionar Equipe
+                  Adicionar Colaboradores
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Adicionar Membros da Equipe</DialogTitle>
+                  <DialogTitle>Adicionar Colaboradores</DialogTitle>
                   <DialogDescription>
-                    Selecione os membros da equipe do projeto que deseja adicionar como mão de obra neste relatório.
+                    Selecione os colaboradores do projeto que deseja adicionar como mão de obra neste relatório.
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -272,31 +272,31 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
               </DialogContent>
             </Dialog>
             
-            {/* Botão para adicionar função manualmente */}
+            {/* Botão para adicionar colaborador manualmente */}
             <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
               <DialogTrigger asChild>
                 <Button size="sm" className="flex items-center gap-1">
                   <PlusIcon className="h-4 w-4" />
-                  Adicionar Função
+                  + Adicionar Colaborador
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{editingId ? "Editar Função" : "Adicionar Função"}</DialogTitle>
+                  <DialogTitle>{editingId ? "Editar Colaborador" : "Adicionar Colaborador"}</DialogTitle>
                   <DialogDescription>
-                    Informe os detalhes da mão de obra utilizada no dia.
+                    Informe os detalhes do colaborador neste dia.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="role"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Função</FormLabel>
+                          <FormLabel>Nome</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Engenheiro, Pedreiro, Servente" {...field} />
+                            <Input placeholder="Nome completo do colaborador" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,17 +305,12 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
 
                     <FormField
                       control={form.control}
-                      name="quantity"
+                      name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Quantidade</FormLabel>
+                          <FormLabel>Função</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              min={1} 
-                              {...field} 
-                              onChange={e => field.onChange(parseInt(e.target.value))}
-                            />
+                            <Input placeholder="Ex: Engenheiro, Pedreiro, Servente" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -381,8 +376,8 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
             <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nome</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Função</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Quantidade</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Horário</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Observações</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Ações</th>
@@ -391,9 +386,9 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
               <tbody className="bg-white divide-y divide-slate-200">
                 {workforce.map((item) => (
                   <tr key={item.id}>
-                    <td className="px-4 py-3 text-sm text-slate-900">{item.role}</td>
-                    <td className="px-4 py-3 text-sm text-slate-500">{item.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-slate-500">{item.startTime} - {item.endTime}</td>
+                    <td className="px-4 py-3 text-sm text-slate-900">{item.name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500">{item.role}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500">{item.startTime} - {item.endTime || ""}</td>
                     <td className="px-4 py-3 text-sm text-slate-500">{item.notes || "-"}</td>
                     <td className="px-4 py-3 text-sm text-right">
                       <div className="flex justify-end space-x-2">
