@@ -48,6 +48,7 @@ export interface IStorage {
   getNextRdoNumber(projectId: number): Promise<number>;
   createRdo(rdo: InsertRdo & { number: number, createdBy: number, status: string }): Promise<Rdo>;
   updateRdo(id: number, data: Partial<Rdo>): Promise<Rdo | undefined>;
+  deleteRdo(id: number): Promise<boolean>;
   getAllRdosForDebug(): Promise<Map<number, Rdo>>;
   
   // Photos
