@@ -103,7 +103,7 @@ export default function ProjectDetailPage() {
     }
   });
 
-  // Mutação para criar membro da equipe
+  // Mutação para criar colaborador
   const createTeamMemberMutation = useMutation({
     mutationFn: async (data: TeamMemberFormValues) => {
       const res = await apiRequest(
@@ -116,8 +116,8 @@ export default function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
       toast({
-        title: "Membro adicionado",
-        description: "Membro da equipe adicionado com sucesso.",
+        title: "Colaborador adicionado",
+        description: "Colaborador adicionado com sucesso ao projeto.",
       });
       setTeamMemberDialogOpen(false);
       form.reset();
@@ -125,13 +125,13 @@ export default function ProjectDetailPage() {
     onError: (error) => {
       toast({
         title: "Erro",
-        description: "Erro ao adicionar membro da equipe: " + error.message,
+        description: "Erro ao adicionar colaborador: " + error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Mutação para atualizar membro da equipe
+  // Mutação para atualizar colaborador
   const updateTeamMemberMutation = useMutation({
     mutationFn: async (data: TeamMemberFormValues & { id: number }) => {
       const { id: memberId, ...memberData } = data;
@@ -145,8 +145,8 @@ export default function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
       toast({
-        title: "Membro atualizado",
-        description: "Membro da equipe atualizado com sucesso.",
+        title: "Colaborador atualizado",
+        description: "Dados do colaborador atualizados com sucesso.",
       });
       setTeamMemberDialogOpen(false);
       form.reset();
@@ -154,13 +154,13 @@ export default function ProjectDetailPage() {
     onError: (error) => {
       toast({
         title: "Erro",
-        description: "Erro ao atualizar membro da equipe: " + error.message,
+        description: "Erro ao atualizar colaborador: " + error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Mutação para excluir membro da equipe
+  // Mutação para excluir colaborador
   const deleteTeamMemberMutation = useMutation({
     mutationFn: async (memberId: number) => {
       await apiRequest(
@@ -171,14 +171,14 @@ export default function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${id}/team`] });
       toast({
-        title: "Membro removido",
-        description: "Membro da equipe removido com sucesso.",
+        title: "Colaborador removido",
+        description: "Colaborador removido com sucesso do projeto.",
       });
     },
     onError: (error) => {
       toast({
         title: "Erro",
-        description: "Erro ao remover membro da equipe: " + error.message,
+        description: "Erro ao remover colaborador: " + error.message,
         variant: "destructive",
       });
     },
@@ -225,15 +225,15 @@ export default function ProjectDetailPage() {
     }
   }, [project, projectForm]);
   
-  // Handlers para o diálogo de membro da equipe
+  // Handlers para o diálogo de colaborador
   const handleOpenTeamMemberDialog = (member?: any) => {
     if (member) {
       setCurrentMember(member);
       form.reset({
         name: member.name,
         role: member.role,
-        company: member.company || "",
-        contact: member.contact || "",
+        startTime: member.startTime || "07:12",
+        endTime: member.endTime || "",
         notes: member.notes || "",
       });
     } else {
@@ -241,8 +241,8 @@ export default function ProjectDetailPage() {
       form.reset({
         name: "",
         role: "",
-        company: "",
-        contact: "",
+        startTime: "07:12",
+        endTime: "",
         notes: "",
       });
     }
@@ -435,14 +435,14 @@ export default function ProjectDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">Equipe</h2>
+              <h2 className="text-lg font-semibold text-slate-800">Colaboradores</h2>
               <Button 
                 variant="link" 
                 className="text-primary hover:text-blue-700 text-sm font-medium p-0"
                 onClick={() => handleOpenTeamMemberDialog()}
               >
                 <UserPlus className="h-4 w-4 mr-1" />
-                Adicionar Membro
+                Adicionar Colaborador
               </Button>
             </div>
             <div className="space-y-4">
@@ -460,7 +460,14 @@ export default function ProjectDetailPage() {
                       <div>
                         <h3 className="text-sm font-medium text-slate-800">{member.name}</h3>
                         <p className="text-xs text-slate-500">{member.role}</p>
-                        {member.company && <p className="text-xs text-slate-400">{member.company}</p>}
+                        <div className="flex mt-1 gap-3">
+                          <p className="text-xs text-slate-400">
+                            <span className="font-medium">Entrada:</span> {member.startTime || "-"}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            <span className="font-medium">Saída:</span> {member.endTime || "-"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -486,14 +493,14 @@ export default function ProjectDetailPage() {
               ) : (
                 <div className="text-center py-8 border border-dashed border-border rounded-lg">
                   <Users className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">Nenhum membro na equipe.</p>
+                  <p className="text-sm text-slate-500">Nenhum colaborador no projeto.</p>
                   <Button 
                     variant="outline"
                     className="mt-4"
                     onClick={() => handleOpenTeamMemberDialog()}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar primeiro membro
+                    Adicionar primeiro colaborador
                   </Button>
                 </div>
               )}
@@ -504,7 +511,7 @@ export default function ProjectDetailPage() {
                 className="w-full justify-between"
                 onClick={() => handleOpenTeamMemberDialog()}
               >
-                <span>Adicionar membro</span>
+                <span>Adicionar colaborador</span>
                 <UserPlus className="h-4 w-4" />
               </Button>
             </div>
@@ -648,17 +655,17 @@ export default function ProjectDetailPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog para adicionar/editar membros da equipe */}
+      {/* Dialog para adicionar/editar colaboradores */}
       <Dialog open={teamMemberDialogOpen} onOpenChange={setTeamMemberDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {currentMember ? "Editar Membro da Equipe" : "Adicionar Membro à Equipe"}
+              {currentMember ? "Editar Colaborador" : "Adicionar Colaborador"}
             </DialogTitle>
             <DialogDescription>
               {currentMember 
-                ? "Atualize as informações do membro da equipe." 
-                : "Preencha os dados do novo membro da equipe."}
+                ? "Atualize as informações do colaborador." 
+                : "Preencha os dados do novo colaborador."}
             </DialogDescription>
           </DialogHeader>
           
@@ -685,7 +692,7 @@ export default function ProjectDetailPage() {
                   <FormItem>
                     <FormLabel>Função</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Engenheiro, Técnico, Supervisor" {...field} />
+                      <Input placeholder="Ex: Engenheiro, Pedreiro, etc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -694,12 +701,12 @@ export default function ProjectDetailPage() {
               
               <FormField
                 control={form.control}
-                name="company"
+                name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Empresa</FormLabel>
+                    <FormLabel>Horário de Entrada</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome da empresa" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -708,12 +715,12 @@ export default function ProjectDetailPage() {
               
               <FormField
                 control={form.control}
-                name="contact"
+                name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contato</FormLabel>
+                    <FormLabel>Horário de Saída</FormLabel>
                     <FormControl>
-                      <Input placeholder="Telefone ou e-mail" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -727,7 +734,7 @@ export default function ProjectDetailPage() {
                   <FormItem>
                     <FormLabel>Observações</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Observações sobre o membro" {...field} />
+                      <Textarea placeholder="Observações sobre o colaborador" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
