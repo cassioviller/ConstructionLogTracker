@@ -129,8 +129,8 @@ export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 // Extend the RDO types with more specific structure for UI
 export type WorkforceItem = {
   id: string;
+  name: string;
   role: string;
-  quantity: number;
   startTime: string;
   endTime: string;
   notes?: string;
@@ -182,14 +182,14 @@ export type PhotoItem = {
   needsUpload?: boolean;
 };
 
-// Team Members table schema
-export const teamMembers = pgTable("team_members", {
+// Colaboradores table schema (anteriormente Team Members)
+export const teamMembers = pgTable("colaboradores", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").references(() => projects.id).notNull(),
   name: text("name").notNull(),
   role: text("role").notNull(),
-  company: text("company"),
-  contact: text("contact"),
+  startTime: text("start_time").default("07:12"),
+  endTime: text("end_time"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: integer("created_by").references(() => users.id),

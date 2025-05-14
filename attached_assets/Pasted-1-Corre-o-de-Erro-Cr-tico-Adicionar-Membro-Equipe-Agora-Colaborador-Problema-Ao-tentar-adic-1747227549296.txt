@@ -1,0 +1,21 @@
+1. Correção de Erro Crítico: Adicionar Membro à Equipe (Agora Colaborador)
+Problema: Ao tentar adicionar um novo membro à equipe (que agora será chamado de "Colaborador"), o sistema apresenta um erro interno. A mensagem de erro observada foi: Erro ao adicionar membro da equipe: 500: {"message":"Erro ao criar membro da equipe"} (conforme imagem fornecida).
+Solicitação: Investigue e corrija a causa raiz deste erro 500 para permitir o cadastro de novos colaboradores sem falhas.
+2. Mudança de Nomenclatura e Unificação de Funcionalidades: "Equipe" para "Colaborador"
+Terminologia: Em todas as partes do sistema onde atualmente se lê "Equipe", "Membro da Equipe" ou "Função" (no contexto de Mão de Obra do RDO), deve ser alterado para "Colaborador".
+Botões e Modais (Exemplos):
+O botão/modal "Adicionar Função" (usado na Mão de Obra do RDO) deve ser renomeado para "Adicionar Colaborador".
+O botão/modal "Adicionar Membro à Equipe" (usado na gestão de equipe do projeto, se aplicável, e que resultava em erro) deve ser renomeado para "Adicionar Colaborador à Equipe" ou simplesmente "Adicionar Colaborador", e sua funcionalidade unificada conforme abaixo.
+Campos Unificados para Adicionar/Editar Colaborador: Tanto o modal que era "Adicionar Função" quanto o que era "Adicionar Membro à Equipe" (e qualquer outro para adicionar pessoas à mão de obra ou à equipe do projeto) devem agora apresentar os seguintes campos unificados:
+Nome: (Campo de texto para o nome do colaborador)
+Função: (Campo de texto para a função, ex: Engenheiro, Pedreiro)
+Horário de Entrada: (Campo de tipo "time", editável)
+Horário de Saída: (Campo de tipo "time", editável)
+Observação: (Campo de texto para observações)
+Remoção de Campos Antigos: Campos como "Quantidade" (do antigo modal "Adicionar Função") e "Empresa", "Contato" (do antigo modal "Adicionar Membro à Equipe") não fazem parte desta nova estrutura unificada para adicionar colaboradores à mão de obra do RDO ou à lista de colaboradores do projeto.
+3. Configurações do Formulário de Colaborador:
+Horário de Entrada Padrão: O campo "Horário de Entrada" deve vir preenchido por padrão com "07:12". No entanto, o campo deve permanecer editável pelo usuário.
+Campos Não Obrigatórios: Para salvar um colaborador (seja ao adicioná-lo pela primeira vez ou ao editar), não será obrigatório o preenchimento de todos os campos (Nome, Função, Horário de Entrada, Horário de Saída, Observação). O usuário deve poder salvar mesmo que alguns campos (além do nome e função, que podem ser considerados essenciais) estejam vazios, especialmente os horários e observações.
+4. Correção de Bug: Carregamento Infinito ao Editar
+Problema: Ao clicar em um botão "Editar" (presumivelmente o botão "Editar" nas "Informações do Projeto", conforme discutido anteriormente, ou outro botão de edição que esteja apresentando o mesmo comportamento), a página entra em um estado de carregamento infinito (spinner de carregamento contínuo), impedindo qualquer ação (conforme imagem fornecida).
+Solicitação: Investigue e corrija este bug para que a funcionalidade de edição (seja de projetos, RDOs ou outros itens) funcione corretamente, carregando os dados para edição e permitindo salvar as alterações.
