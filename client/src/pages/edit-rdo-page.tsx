@@ -32,22 +32,22 @@ export default function EditRdoPage() {
   const { user } = useAuth();
   const [formData, setFormData] = useState<RdoFormData | null>(null);
 
-  // Fetch RDO data first to get the correct projectId
+  // Fetch RDO data
   const { data: rdo, isLoading: isRdoLoading } = useQuery({
     queryKey: [`/api/rdos/${rdoId}`]
   });
   
-  // Depois que tivermos o RDO, usamos o projectId dele para buscar o projeto
+  // Fetch project info using the projectId from the RDO
   const { data: project, isLoading: isProjectLoading } = useQuery({
-    queryKey: [`/api/projects/${rdo?.projectId || projectId}`],
-    enabled: !!rdo || !!projectId,
+    queryKey: [`/api/projects/${rdo?.projectId}`],
+    enabled: !!rdo?.projectId,
   });
 
   // Quando os dados do RDO chegarem, alimentamos o estado do formulário
   useEffect(() => {
     if (rdo) {
       setFormData({
-        projectId: parseInt(projectId),
+        projectId: rdo.projectId, // Usar projectId do RDO
         date: rdo.date,
         weatherMorning: rdo.weatherMorning,
         weatherAfternoon: rdo.weatherAfternoon,
@@ -60,7 +60,7 @@ export default function EditRdoPage() {
         comments: rdo.comments || [],
       });
     }
-  }, [rdo, projectId]);
+  }, [rdo]);
 
   // Fetch photos for this RDO
   const { data: photos, isLoading: isPhotosLoading } = useQuery({
@@ -119,8 +119,10 @@ export default function EditRdoPage() {
       return updatedRdo;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/reports`] });
+      // Usamos o projectId do RDO retornado para invalidar consultas
+      const projectIdFromRdo = data.projectId || rdo?.projectId;
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectIdFromRdo}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectIdFromRdo}/reports`] });
       queryClient.invalidateQueries({ queryKey: [`/api/rdos/${rdoId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/rdos/${rdoId}/photos`] });
       queryClient.invalidateQueries({ queryKey: ["/api/recent-reports"] });
@@ -131,7 +133,7 @@ export default function EditRdoPage() {
         description: `O relatório #${data.number} foi atualizado.`,
       });
       
-      navigate(`/project/${projectId}/rdo/${rdoId}`);
+      navigate(`/project/${projectIdFromRdo}/rdo/${rdoId}`);
     },
     onError: (error) => {
       toast({
@@ -186,7 +188,11 @@ export default function EditRdoPage() {
   };
 
   const cancelForm = () => {
-    navigate(`/project/${projectId}/rdo/${rdoId}`);
+    if (rdo) {
+      navigate(`/project/${rdo.projectId}/rdo/${rdoId}`);
+    } else {
+      navigate('/projects');
+    }
   };
 
   if (isProjectLoading || isRdoLoading || !formData) {
@@ -216,7 +222,7 @@ export default function EditRdoPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(`/project/${projectId}/rdo/${rdoId}`)}
+          onClick={() => rdo ? navigate(`/project/${rdo.projectId}/rdo/${rdoId}`) : navigate("/projects")}
           className="mr-3"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -263,7 +269,7 @@ export default function EditRdoPage() {
 
       <div className="space-y-6">
         <WeatherSection onChange={updateWeather} initialData={formData} />
-        <WorkforceSection onChange={updateWorkforce} projectId={projectId} initialData={formData.workforce} />
+        <WorkforceSection onChange={updateWorkforce} projectId={rdo.projectId.toString()} initialData={formData.workforce} />
         <EquipmentSection onChange={updateEquipment} initialData={formData.equipment} />
         <ActivitiesSection onChange={updateActivities} initialData={formData.activities} />
         <OccurrencesSection onChange={updateOccurrences} initialData={formData.occurrences} />
