@@ -40,7 +40,12 @@ export default function RdoHistoryPage() {
   });
 
   // Fetch RDO list for this project with pagination
-  const { data: rdoResponse, isLoading: isRdoLoading, error: rdoError } = useQuery({
+  // Função para recarregar a lista de RDOs
+  const fetchReports = (currentPage: number) => {
+    setPage(currentPage);
+  };
+
+  const { data: rdoResponse, isLoading: isRdoLoading, error: rdoError, refetch } = useQuery({
     queryKey: [`/api/projects/${projectId}/reports`, page, searchTerm, monthFilter],
     queryFn: async ({ queryKey }) => {
       const [baseUrl, page, search, month] = queryKey;
@@ -334,12 +339,11 @@ export default function RdoHistoryPage() {
                                     
                                     toast({
                                       title: "RDO excluído",
-                                      description: `RDO #${rdo.number} excluído com sucesso`,
-                                      variant: "success"
+                                      description: `RDO #${rdo.number} excluído com sucesso`
                                     });
                                     
                                     // Recarregar a lista de RDOs
-                                    fetchReports(currentPage);
+                                    refetch();
                                   } catch (error) {
                                     console.error('Erro ao excluir RDO:', error);
                                     toast({
