@@ -39,36 +39,40 @@ export default function EditRdoPage() {
 
   // Fetch RDO data
   const { data: rdo, isLoading: isRdoLoading } = useQuery({
-    queryKey: [`/api/rdos/${rdoId}`],
-    onSuccess: (data) => {
-      // Quando os dados do RDO chegarem, alimentamos o estado do formulário
+    queryKey: [`/api/rdos/${rdoId}`]
+  });
+
+  // Quando os dados do RDO chegarem, alimentamos o estado do formulário
+  useEffect(() => {
+    if (rdo) {
       setFormData({
         projectId: parseInt(projectId),
-        date: data.date,
-        weatherMorning: data.weatherMorning,
-        weatherAfternoon: data.weatherAfternoon,
-        weatherNight: data.weatherNight,
-        weatherNotes: data.weatherNotes || "",
-        workforce: data.workforce || [],
-        equipment: data.equipment || [],
-        activities: data.activities || [],
-        occurrences: data.occurrences || [],
-        photos: data.photos || [],
-        comments: data.comments || [],
+        date: rdo.date,
+        weatherMorning: rdo.weatherMorning,
+        weatherAfternoon: rdo.weatherAfternoon,
+        weatherNight: rdo.weatherNight,
+        weatherNotes: rdo.weatherNotes || "",
+        workforce: rdo.workforce || [],
+        equipment: rdo.equipment || [],
+        activities: rdo.activities || [],
+        occurrences: rdo.occurrences || [],
+        comments: rdo.comments || [],
       });
     }
-  });
+  }, [rdo, projectId]);
 
   // Fetch photos for this RDO
   const { data: photos, isLoading: isPhotosLoading } = useQuery({
     queryKey: [`/api/rdos/${rdoId}/photos`],
-    enabled: !!rdoId,
-    onSuccess: (data) => {
-      if (formData && (!formData.photos || formData.photos.length === 0) && data.length > 0) {
-        setFormData(prev => prev ? { ...prev, photos: data } : null);
-      }
-    }
+    enabled: !!rdoId
   });
+  
+  // Atualizar o formData com as fotos quando elas carregarem
+  useEffect(() => {
+    if (photos && formData && (!formData.photos || formData.photos.length === 0) && photos.length > 0) {
+      setFormData(prev => prev ? { ...prev, photos } : null);
+    }
+  }, [photos, formData]);
 
   const updateRdoMutation = useMutation({
     mutationFn: async (rdo: RdoFormData) => {
