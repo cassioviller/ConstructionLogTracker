@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
+      - SESSION_SECRET=${SESSION_SECRET:-supersecretkey123}
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - diario-obra-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: estruturas_diariodeobras
+    environment:
+      - POSTGRES_USER=obras
+      - POSTGRES_PASSWORD=obras
+      - POSTGRES_DB=obras
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+    networks:
+      - diario-obra-network
+
+networks:
+  diario-obra-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
