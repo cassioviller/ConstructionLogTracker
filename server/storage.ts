@@ -1123,20 +1123,34 @@ export class DatabaseStorage implements IStorage {
   // Fotos
   async getPhotos(options: PhotoFilterOptions): Promise<Photo[]> {
     try {
-      console.log("Buscando fotos");
+      console.log(`Buscando fotos${options.userId ? ` para o usuário ID: ${options.userId}` : ''}`);
       let query = db.select().from(photos);
+      
+      // Lista de condições para a consulta
+      let conditions = [];
+      
+      // Filtrar por usuário se userId for fornecido
+      if (options.userId) {
+        conditions.push(eq(photos.createdBy, options.userId));
+      }
       
       if (options.projectId) {
         // Para buscar fotos por projeto, precisaríamos juntar com RDOs
         // Esta é uma implementação simplificada
-        const projectRdos = await db.select({ id: rdos.id })
-          .from(rdos)
+        let rdoQuery = db.select({ id: rdos.id }).from(rdos)
           .where(eq(rdos.projectId, options.projectId));
+        
+        // Se tiver userId, também filtrar os RDOs pelo mesmo usuário
+        if (options.userId) {
+          rdoQuery = rdoQuery.where(eq(rdos.createdBy, options.userId));
+        }
+        
+        const projectRdos = await rdoQuery;
         
         const rdoIds = projectRdos.map(r => r.id);
         if (rdoIds.length > 0) {
           // Se houver RDOs neste projeto, buscar suas fotos
-          query = query.where(sql`rdo_id IN (${rdoIds.join(',')})`);
+          conditions.push(sql`rdo_id IN (${rdoIds.join(',')})`);
         } else {
           // Se não houver RDOs, retornar array vazio
           return [];
@@ -1144,7 +1158,12 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (options.search) {
-        query = query.where(like(photos.caption, `%${options.search}%`));
+        conditions.push(like(photos.caption, `%${options.search}%`));
+      }
+      
+      // Aplicar todas as condições à consulta
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
       }
       
       const photosList = await query.orderBy(desc(photos.createdAt));

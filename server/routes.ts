@@ -434,8 +434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
       const search = req.query.search as string;
+      const userId = req.user!.id;
       
-      const photos = await storage.getPhotos({ projectId, search });
+      const photos = await storage.getPhotos({ projectId, search, userId });
       res.json(photos);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar fotos" });
