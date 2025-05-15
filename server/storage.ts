@@ -12,6 +12,8 @@ import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { eq, desc, asc, sql, and, like, or, isNotNull, count } from 'drizzle-orm';
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
@@ -34,6 +36,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   
   // Projects
   getProjects(userId: number): Promise<Project[]>;
@@ -128,6 +131,25 @@ export class MemStorage implements IStorage {
     const user: User = { ...userData, id, createdAt: now };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) {
+      return undefined;
+    }
+    
+    // Se houver uma senha e ela não for um hash, vamos criptografar
+    if (userData.password && !userData.password.includes('.')) {
+      const hashAsync = promisify(scrypt);
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await hashAsync(userData.password, salt, 64)) as Buffer;
+      userData.password = `${buf.toString("hex")}.${salt}`;
+    }
+    
+    const updatedUser = { ...user, ...userData };
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   // Project methods
@@ -728,6 +750,36 @@ export class DatabaseStorage implements IStorage {
       return user;
     } catch (error) {
       console.error("Erro ao criar usuário:", error);
+      throw error;
+    }
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    try {
+      console.log(`Atualizando usuário ID: ${id}`);
+      
+      // Se houver uma senha e ela não for um hash, vamos criptografar
+      if (userData.password && !userData.password.includes('.')) {
+        const hashAsync = promisify(scrypt);
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await hashAsync(userData.password, salt, 64)) as Buffer;
+        userData.password = `${buf.toString("hex")}.${salt}`;
+      }
+      
+      const [updatedUser] = await db.update(users)
+        .set(userData)
+        .where(eq(users.id, id))
+        .returning();
+        
+      if (!updatedUser) {
+        console.log(`Nenhum usuário encontrado com ID: ${id}`);
+        return undefined;
+      }
+      
+      console.log(`Usuário atualizado com sucesso: ID ${updatedUser.id}`);
+      return updatedUser;
+    } catch (error) {
+      console.error(`Erro ao atualizar usuário ID ${id}:`, error);
       throw error;
     }
   }
