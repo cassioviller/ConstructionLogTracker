@@ -30,6 +30,7 @@ interface PaginationOptions {
 interface PhotoFilterOptions {
   projectId?: number;
   search?: string;
+  userId?: number;
 }
 
 export interface IStorage {
@@ -921,27 +922,47 @@ export class DatabaseStorage implements IStorage {
       const limit = options.limit || 10;
       const search = options.search;
       const month = options.month;
+      const userId = options.userId;
       
-      console.log(`Buscando todos os RDOs, página ${page}, limite ${limit}`);
+      console.log(`Buscando todos os RDOs, página ${page}, limite ${limit}${userId ? `, usuário ID: ${userId}` : ''}`);
       
       // Construir consulta base
       let query = db.select().from(rdos);
       
+      // Condições para a consulta
+      let conditions = [];
+      
+      // Filtrar por usuário se userId for fornecido
+      if (userId) {
+        conditions.push(eq(rdos.createdBy, userId));
+      }
+      
       // Aplicar filtro de busca se fornecido
       if (search) {
-        query = query.where(like(rdos.weatherNotes, `%${search}%`));
+        conditions.push(like(rdos.weatherNotes, `%${search}%`));
       }
       
       // Aplicar filtro de mês se fornecido
       if (month && month !== 'all') {
         const monthNumber = parseInt(month);
-        // Implementação simplificada
+        // Implementação simplificada para filtro por mês
+      }
+      
+      // Aplicar condições à consulta
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
       }
       
       // Contar total para paginação
-      const [result] = await db.select({ count: sql`count(*)` }).from(rdos);
+      let countQuery = db.select({ count: sql`count(*)` }).from(rdos);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
+      const [result] = await countQuery;
       const total = Number(result.count);
       const totalPages = Math.ceil(total / limit);
+      
+      console.log(`Total de RDOs encontrados: ${total}`);
       
       // Obter registros com paginação
       const offset = (page - 1) * limit;
