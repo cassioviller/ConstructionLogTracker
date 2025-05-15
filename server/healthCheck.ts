@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { pool } from './db';
+import { db } from './db';
+import { sql } from 'drizzle-orm';
 
 export async function healthCheck(req: Request, res: Response) {
   try {
@@ -50,16 +51,16 @@ export async function healthCheck(req: Request, res: Response) {
 
 async function checkDatabaseConnection() {
   try {
-    const client = await pool.connect();
-    const result = await client.query('SELECT NOW() as now');
-    client.release();
+    const start = Date.now();
+    const result = await db.execute(sql`SELECT NOW() as now`);
+    const responseTime = Date.now() - start;
 
     return {
       status: 'ok',
-      responseTime: 'OK',
+      responseTime: `${responseTime}ms`,
       details: {
         connected: true,
-        serverTime: result.rows[0].now
+        serverTime: result[0]?.now
       }
     };
   } catch (error) {

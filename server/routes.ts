@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { generatePdfRdo } from "./pdf";
 import { insertProjectSchema, insertRdoSchema, insertPhotoSchema, insertTeamMemberSchema } from "@shared/schema";
+import { healthCheck } from "./healthCheck";
 import { z } from "zod";
 
 function requireAuth(req: Request, res: Response, next: Function) {
@@ -651,6 +652,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao excluir membro da equipe" });
     }
   });
+
+  // Rota para health check (não requer autenticação)
+  app.get("/api/health", healthCheck);
 
   return httpServer;
 }
