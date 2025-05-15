@@ -3,27 +3,24 @@ FROM node:20-alpine as builder
 # Definir diretório de trabalho
 WORKDIR /app
 
-# Instalar dependências necessárias para build
-RUN apk add --no-cache python3 make g++ libc6-compat
+# Instalar dependências básicas
+RUN apk add --no-cache python3 make g++ libc6-compat bash
 
-# Copiar arquivos de dependências
-COPY package*.json ./
-
-# Instalar dependências
-RUN npm ci
-
-# Copiar código fonte
+# Copiar todo o código fonte incluindo arquivos de configuração
 COPY . .
 
-# Construir a aplicação
-RUN npm run build
+# Tornar o script de build executável
+RUN chmod +x easypanel-build.sh
+
+# Executar o script de build personalizado
+RUN ./easypanel-build.sh
 
 # Estágio 2: imagem de produção
 FROM node:20-alpine as production
 
 WORKDIR /app
 
-# Instalar apenas dependências de produção
+# Copiar package.json e install apenas dependências de produção
 COPY package*.json ./
 RUN npm ci --omit=dev
 
