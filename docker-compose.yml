@@ -1,21 +1,31 @@
-version: '3'
+version: '3.8'
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: diario_obra_app
     ports:
       - "5000:5000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
       - SESSION_SECRET=${SESSION_SECRET:-supersecretkey123}
+      - TZ=America/Sao_Paulo
     depends_on:
       - db
     restart: always
     networks:
       - diario-obra-network
+    volumes:
+      - app_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   db:
     image: postgres:16-alpine
@@ -24,13 +34,30 @@ services:
       - POSTGRES_USER=obras
       - POSTGRES_PASSWORD=obras
       - POSTGRES_DB=obras
+      - TZ=America/Sao_Paulo
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backup:/backup
     ports:
       - "5432:5432"
     restart: always
     networks:
       - diario-obra-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obras"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command: >
+      -c shared_buffers=128MB
+      -c max_connections=100
+      -c effective_cache_size=512MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c wal_level=replica
 
 networks:
   diario-obra-network:
@@ -38,3 +65,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  app_uploads:
+    driver: local

@@ -48,6 +48,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
   
+  // Endpoint de health check para o Docker
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+  });
+  
   // Garantir que existe um usuário admin
   await ensureAdminUser();
 
