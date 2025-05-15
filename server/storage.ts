@@ -24,6 +24,7 @@ interface PaginationOptions {
   limit?: number;
   search?: string;
   month?: string;
+  userId?: number;
 }
 
 interface PhotoFilterOptions {
