@@ -6,6 +6,29 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 
+// Tipagens para garantir que os dados sejam usados corretamente
+interface RecentReport {
+  id: number;
+  number: number;
+  projectId: number;
+  projectName: string;
+  date: string;
+  status: string;
+}
+
+interface Photo {
+  id: number;
+  url: string;
+  caption: string | null;
+  rdoId: number;
+  createdAt: string;
+}
+
+// Função de verificação para garantir que os dados são do tipo esperado
+function ensureArray<T>(data: any): T[] {
+  return Array.isArray(data) ? data : [];
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
 
@@ -16,6 +39,11 @@ export default function DashboardPage() {
 
   const { data: recentReports, isLoading: isReportsLoading } = useQuery({
     queryKey: ["/api/recent-reports"],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const { data: recentPhotos, isLoading: isPhotosLoading } = useQuery({
+    queryKey: ["/api/photos"],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -176,7 +204,7 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentReports?.map((report) => (
+                      {ensureArray<RecentReport>(recentReports).map((report) => (
                         <tr key={report.id} className="hover:bg-slate-50">
                           <td className="py-3 text-sm font-medium text-slate-900">#{report.number}</td>
                           <td className="py-3 text-sm text-slate-500">{report.projectName}</td>
@@ -203,7 +231,7 @@ export default function DashboardPage() {
                           </td>
                         </tr>
                       ))}
-                      {(!recentReports || recentReports.length === 0) && (
+                      {ensureArray<RecentReport>(recentReports).length === 0 && (
                         <tr>
                           <td colSpan={5} className="py-4 text-center text-slate-500">
                             Nenhum relatório encontrado
@@ -229,63 +257,77 @@ export default function DashboardPage() {
               </Link>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <img
-                    src="https://pixabay.com/get/g3dce628665ba5b3b658bad44a541a365f8064533738d18048605325e27f6d1c1f73ca406c58f7f9dffbccce4e132f0e2944a2d7fd2da50f38aa69880ef0c33f7_1280.jpg"
-                    alt="Fundação em progresso"
-                    className="rounded-md h-24 w-full object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400"
-                    alt="Soldagem da estrutura metálica"
-                    className="rounded-md h-24 w-full object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1578530332818-6ba472e67b9f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400"
-                    alt="Concretagem do segundo pavimento"
-                    className="rounded-md h-24 w-full object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1621155346337-1d19476ba7d6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400"
-                    alt="Vista geral da obra com gruas"
-                    className="rounded-md h-24 w-full object-cover"
-                  />
+              {isReportsLoading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    {isPhotosLoading ? (
+                      // Estado de carregamento
+                      <>
+                        {[1, 2, 3, 4].map((index) => (
+                          <div key={index} className="rounded-md h-24 w-full bg-slate-100 flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                          </div>
+                        ))}
+                      </>
+                    ) : ensureArray<Photo>(recentPhotos).length > 0 ? (
+                      // Se houver fotos, exibir até 4
+                      <>
+                        {ensureArray<Photo>(recentPhotos).slice(0, 4).map((photo) => (
+                          <div key={photo.id} className="rounded-md h-24 w-full overflow-hidden">
+                            <img 
+                              src={photo.url} 
+                              alt={photo.caption || 'Foto da obra'} 
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      // Placeholders quando não há fotos
+                      <>
+                        {[1, 2, 3, 4].map((index) => (
+                          <div key={index} className="rounded-md h-24 w-full bg-slate-100 flex items-center justify-center">
+                            <ImageIcon className="h-6 w-6 text-slate-400" />
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
 
-                <div className="border-t border-slate-200 pt-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">Atividades Recentes</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-primary">
-                        <FileBarChart className="h-4 w-4" />
+                  <div className="border-t border-slate-200 pt-4">
+                    <h3 className="text-sm font-medium text-slate-700 mb-2">Atividades Recentes</h3>
+                    
+                    {ensureArray<RecentReport>(recentReports).length > 0 ? (
+                      <div className="space-y-3">
+                        {/* Mapear os relatórios recentes como atividades */}
+                        {ensureArray<RecentReport>(recentReports).slice(0, 3).map((report) => (
+                          <div key={report.id} className="flex items-start">
+                            <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-primary">
+                              <FileBarChart className="h-4 w-4" />
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm text-slate-700">
+                                RDO #{report.number} - {report.projectName}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {new Date(report.date).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-slate-700">RDO #042 foi criado</p>
-                        <p className="text-xs text-slate-500">Hoje às 17:45</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-500">
-                        <ImageIcon className="h-4 w-4" />
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-slate-700">4 novas fotos adicionadas</p>
-                        <p className="text-xs text-slate-500">Hoje às 16:30</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
-                        <Calendar className="h-4 w-4" />
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-slate-700">Falta de material registrada</p>
-                        <p className="text-xs text-slate-500">Hoje às 11:15</p>
-                      </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 py-2 text-center">
+                        Nenhuma atividade recente encontrada
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
