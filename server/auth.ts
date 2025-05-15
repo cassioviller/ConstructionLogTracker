@@ -21,11 +21,19 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-// Função simplificada de comparação para desenvolvimento
+// Função para comparar senhas com hashing
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    // Durante o desenvolvimento, permitimos comparação direta para testes
-    return supplied === stored;
+    // Verificar se é um hash (com o separador .)
+    if (stored.includes('.')) {
+      const [hashed, salt] = stored.split(".");
+      const hashedBuf = Buffer.from(hashed, "hex");
+      const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+      return timingSafeEqual(hashedBuf, suppliedBuf);
+    } else {
+      // Fallback para comparação direta (para senhas sem hash em ambiente de desenvolvimento)
+      return supplied === stored;
+    }
   } catch (error) {
     console.error('Erro ao comparar senhas:', error);
     return false;

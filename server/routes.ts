@@ -13,11 +13,60 @@ function requireAuth(req: Request, res: Response, next: Function) {
   next();
 }
 
+// Função para garantir que exista um usuário admin
+async function ensureAdminUser() {
+  try {
+    const adminUsername = 'admin';
+    const existingUser = await storage.getUserByUsername(adminUsername);
+    
+    if (!existingUser) {
+      console.log('Criando usuário admin padrão...');
+      await storage.createUser({
+        username: adminUsername,
+        password: 'admin123', // Senha padrão 
+        name: 'Administrador',
+        jobTitle: 'Administrador do Sistema',
+        company: 'Diário de Obra Pro'
+      });
+      console.log('Usuário admin criado com sucesso!');
+    } else {
+      console.log('Usuário admin já existe, pulando criação');
+    }
+  } catch (error) {
+    console.error('Erro ao criar/verificar usuário admin:', error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Garantir que existe um usuário admin
+  await ensureAdminUser();
 
   const httpServer = createServer(app);
+  
+  // Rota para resetar a senha do admin (apenas em ambiente de desenvolvimento)
+  app.post("/api/reset-admin", async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ message: "Esta operação não é permitida em ambiente de produção" });
+    }
+    
+    try {
+      const adminUser = await storage.getUserByUsername('admin');
+      if (!adminUser) {
+        return res.status(404).json({ message: "Usuário admin não encontrado" });
+      }
+      
+      // Resetar para a senha padrão
+      await storage.updateUser(adminUser.id, { password: 'admin123' });
+      
+      res.status(200).json({ message: "Senha do admin resetada com sucesso para 'admin123'" });
+    } catch (error) {
+      console.error('Erro ao resetar senha do admin:', error);
+      res.status(500).json({ message: "Erro ao resetar senha do admin" });
+    }
+  });
 
   // Projects routes
   app.get("/api/projects", requireAuth, async (req, res) => {
