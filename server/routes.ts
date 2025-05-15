@@ -17,13 +17,20 @@ function requireAuth(req: Request, res: Response, next: Function) {
 async function ensureAdminUser() {
   try {
     const adminUsername = 'admin';
+    console.log(`Buscando usuário pelo username: ${adminUsername}`);
     const existingUser = await storage.getUserByUsername(adminUsername);
     
     if (!existingUser) {
       console.log('Criando usuário admin padrão...');
+      // Usar a função de hash de senha do arquivo auth.ts
+      const { hashPassword } = await import('./auth');
+      
+      // Senha padrão com hash
+      const hashedPassword = await hashPassword('admin123');
+      
       await storage.createUser({
         username: adminUsername,
-        password: 'admin123', // Senha padrão 
+        password: hashedPassword,
         name: 'Administrador',
         jobTitle: 'Administrador do Sistema',
         company: 'Diário de Obra Pro'
@@ -58,8 +65,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário admin não encontrado" });
       }
       
-      // Resetar para a senha padrão
-      await storage.updateUser(adminUser.id, { password: 'admin123' });
+      // Usar a função de hash do arquivo auth
+      const { hashPassword } = await import('./auth');
+      
+      // Resetar para a senha padrão com hash
+      const hashedPassword = await hashPassword('admin123');
+      await storage.updateUser(adminUser.id, { password: hashedPassword });
       
       res.status(200).json({ message: "Senha do admin resetada com sucesso para 'admin123'" });
     } catch (error) {
