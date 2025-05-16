@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: diario_obra_app
     ports:
-      - "5000:5000"
+      - "5002:5002"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
@@ -21,7 +21,7 @@ services:
     volumes:
       - app_uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:5002/health"]
       interval: 30s
       timeout: 5s
       retries: 3

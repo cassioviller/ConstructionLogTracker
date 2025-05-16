@@ -1,57 +1,41 @@
-FROM node:20-alpine as builder
+FROM node:20-slim
 
 # Definir diretório de trabalho
 WORKDIR /app
 
-# Instalar dependências básicas
-RUN apk add --no-cache python3 make g++ libc6-compat bash
+# Instalar ferramentas necessárias (inclui postgresql-client para conexão com banco)
+RUN apt-get update && apt-get install -y postgresql-client wget curl && rm -rf /var/lib/apt/lists/*
 
-# Copiar apenas os arquivos necessários para instalar dependências
+# Copiar arquivos de dependências
 COPY package*.json ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
-COPY drizzle.config.ts ./
 
-# Instalar TODAS as dependências, incluindo as de desenvolvimento
+# Instalar todas as dependências
 RUN npm ci
 
-# Copiar todo o código fonte após instalação das dependências
+# Copiar o restante dos arquivos do projeto
 COPY . .
 
-# Build da aplicação frontend e backend
-RUN NODE_ENV=production npm run build
+# Verificar se existe o script de entrada e torná-lo executável
+RUN if [ -f docker-entrypoint.sh ]; then chmod +x docker-entrypoint.sh; fi
 
-# Lista os arquivos do diretório dist para debug
-RUN ls -la dist && ls -la dist/public || echo "Pasta dist/public não existe"
-
-# Estágio 2: imagem de produção
-FROM node:20-alpine as production
-
-WORKDIR /app
-
-# Copiar package.json e instalar apenas dependências de produção
-COPY package*.json ./
-RUN npm ci --omit=dev --no-optional
-
-# Instalar o vite como dependência regular para evitar erros no runtime
-RUN npm install --save vite
-
-# Copiar os arquivos construídos do estágio anterior
-COPY --from=builder /app/dist ./dist
+# Executar o build da aplicação
+RUN npm run build
 
 # Criar diretórios necessários para uploads e backups
 RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
 
-# Variáveis de ambiente para produção
-ENV NODE_ENV=production
-ENV PORT=5001
+# Expor a porta utilizada pelo aplicativo
+EXPOSE 5002
 
-# Porta que a aplicação irá escutar
-EXPOSE 5001
+# Valores padrão para variáveis de ambiente
+ENV DATABASE_URL=${DATABASE_URL:-postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable}
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV PORT=${PORT:-5002}
+ENV SESSION_SECRET=${SESSION_SECRET:-diario-de-obra-session-secret-production}
 
 # Healthcheck para verificar se a aplicação está funcionando
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:5001/health || exit 1
+  CMD wget -qO- http://localhost:5002/health || exit 1
 
-# Iniciar a aplicação
-CMD ["node", "dist/index.js"]
+# Comando para iniciar a aplicação
+CMD ["npm", "run", "start"]
