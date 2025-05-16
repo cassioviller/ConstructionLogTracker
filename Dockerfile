@@ -24,6 +24,9 @@ RUN mkdir -p /app/dist
 # Build da aplicação frontend e backend
 RUN NODE_ENV=production npm run build
 
+# Verificar onde o build do frontend foi gerado
+RUN find . -type d -name "dist" | sort
+
 # Garantir que o código de produção não importará o Vite
 RUN grep -l "vite" dist/*.js || echo "Nenhuma referência ao vite encontrada nos arquivos de produção (sucesso)"
 
@@ -42,7 +45,6 @@ RUN npm install --save vite
 
 # Copiar arquivos construídos do estágio anterior
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/client/dist ./client/dist
 
 # Criar diretórios necessários
 RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
