@@ -18,17 +18,11 @@ RUN npm ci
 # Copiar todo o código fonte após instalação das dependências
 COPY . .
 
-# Criar diretório para build
-RUN mkdir -p /app/dist
-
 # Build da aplicação frontend e backend
 RUN NODE_ENV=production npm run build
 
-# Verificar onde o build do frontend foi gerado
-RUN find . -type d -name "dist" | sort
-
-# Garantir que o código de produção não importará o Vite
-RUN grep -l "vite" dist/*.js || echo "Nenhuma referência ao vite encontrada nos arquivos de produção (sucesso)"
+# Lista os arquivos do diretório dist para debug
+RUN ls -la dist && ls -la dist/public || echo "Pasta dist/public não existe"
 
 # Estágio 2: imagem de produção
 FROM node:20-alpine as production
@@ -39,14 +33,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --no-optional
 
-# Também instalar o vite explicitamente na imagem de produção para garantir
-# que não ocorra o erro de módulo não encontrado
+# Instalar o vite como dependência regular para evitar erros no runtime
 RUN npm install --save vite
 
-# Copiar arquivos construídos do estágio anterior
+# Copiar os arquivos construídos do estágio anterior
 COPY --from=builder /app/dist ./dist
 
-# Criar diretórios necessários
+# Criar diretórios necessários para uploads e backups
 RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
 
 # Variáveis de ambiente para produção
@@ -58,7 +51,7 @@ EXPOSE 5000
 
 # Healthcheck para verificar se a aplicação está funcionando
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:5000/api/health || exit 1
+  CMD wget -qO- http://localhost:5000/health || exit 1
 
 # Iniciar a aplicação
 CMD ["node", "dist/index.js"]
