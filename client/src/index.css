@@ -113,6 +113,53 @@
   main {
     padding-bottom: 80px !important;
   }
+  
+  /* Melhorias para interface móvel */
+  .grid-cols-1.md\:grid-cols-3 {
+    gap: 1rem !important;
+  }
+  
+  .card-mobile-compact {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Melhorar visualização de botões em dispositivos móveis */
+  .btn-mobile-full {
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+  }
+  
+  /* Ajustar o tamanho das fontes para telas menores */
+  h1.text-2xl {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Espaçamento menor para elementos em telas menores */
+  .mobile-spacing-tight {
+    padding: 0.75rem !important;
+  }
+  
+  /* Melhor visualização de tabelas em dispositivos móveis */
+  table.mobile-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Melhorar exibição de cards de membros da equipe */
+  .flex.items-center.justify-between {
+    flex-wrap: wrap;
+  }
+  
+  /* Ajustar tamanho de texto em telas pequenas */
+  .text-xs {
+    line-height: 1.4 !important;
+  }
+  
+  /* Melhorar espaçamento em componentes de data */
+  input[type="date"] {
+    font-size: 14px !important;
+  }
 }
 
 /* Focus styles for better accessibility */

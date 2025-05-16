@@ -35,7 +35,6 @@ const teamMemberSchema = z.object({
 
 // Schema para validação do formulário de edição do projeto
 const projectEditSchema = z.object({
-  responsible: z.string().optional(),
   startDate: z.string().min(1, { message: "Data de início é obrigatória" }),
   endDate: z.string().min(1, { message: "Previsão de término é obrigatória" }),
   client: z.string().min(1, { message: "Cliente é obrigatório" }),
@@ -306,7 +305,6 @@ export default function ProjectDetailPage() {
             onClick={() => {
               // Inicializar o formulário com os dados atuais do projeto
               projectForm.reset({
-                responsible: project.responsible?.name || "",
                 startDate: project.startDate,
                 endDate: project.endDate,
                 client: project.client,
@@ -320,34 +318,25 @@ export default function ProjectDetailPage() {
             Editar
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mobile-spacing-tight">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <h3 className="text-sm font-medium text-slate-500 mb-1">Responsável Técnico</h3>
-              <div className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs mr-2">
-                  {(project.responsible?.charAt?.(0) || project.responsible?.name?.charAt?.(0) || "U")}
-                </div>
-                <span className="text-slate-800">{project.responsible?.name || project.responsible || "Não atribuído"}</span>
-              </div>
-            </div>
-            <div>
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-slate-500 mb-1">Data de Início</h3>
               <p className="text-slate-800">{new Date(project.startDate).toLocaleDateString('pt-BR')}</p>
             </div>
-            <div>
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-slate-500 mb-1">Previsão de Término</h3>
               <p className="text-slate-800">{new Date(project.endDate).toLocaleDateString('pt-BR')}</p>
             </div>
-            <div>
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-slate-500 mb-1">Cliente</h3>
               <p className="text-slate-800">{project.client}</p>
             </div>
-            <div>
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-slate-500 mb-1">Endereço</h3>
               <p className="text-slate-800">{project.location}</p>
             </div>
-            <div>
+            <div className="mb-2">
               <h3 className="text-sm font-medium text-slate-500 mb-1">Status</h3>
               <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Em andamento</span>
             </div>
@@ -356,8 +345,8 @@ export default function ProjectDetailPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="card-mobile-compact">
+          <CardContent className="pt-6 mobile-spacing-tight">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-800">Relatórios (RDOs)</h2>
               <Link href={`/project/${id}/new-rdo`}>
@@ -374,7 +363,7 @@ export default function ProjectDetailPage() {
             </div>
             <div className="border-t border-slate-200 pt-4">
               <Link href={`/project/${id}/rdo-history`}>
-                <Button variant="ghost" className="w-full justify-between">
+                <Button variant="ghost" className="w-full justify-between btn-mobile-full">
                   <span>Ver todos os relatórios</span>
                   <ArrowLeft className="h-4 w-4 rotate-180" />
                 </Button>
@@ -423,7 +412,7 @@ export default function ProjectDetailPage() {
             </div>
             <div className="border-t border-slate-200 pt-4 mt-4">
               <Link href={`/photos?projectId=${id}`}>
-                <Button variant="ghost" className="w-full justify-between">
+                <Button variant="ghost" className="w-full justify-between btn-mobile-full">
                   <span>Ver galeria completa</span>
                   <ArrowLeft className="h-4 w-4 rotate-180" />
                 </Button>
@@ -432,8 +421,8 @@ export default function ProjectDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="card-mobile-compact">
+          <CardContent className="pt-6 mobile-spacing-tight">
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-slate-800">Equipe</h2>
             </div>
@@ -605,19 +594,7 @@ export default function ProjectDetailPage() {
                 )}
               />
               
-              <FormField
-                control={projectForm.control}
-                name="responsible"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Responsável Técnico</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do responsável" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
 
               <DialogFooter className="pt-4">
                 <Button 

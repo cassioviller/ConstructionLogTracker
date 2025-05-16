@@ -280,10 +280,7 @@ export default function EditRdoPage() {
           <Button variant="outline" onClick={cancelForm}>
             Cancelar
           </Button>
-          <div className="space-x-2">
-            <Button variant="outline" className="border-primary text-primary" onClick={handleSaveDraft}>
-              Salvar Rascunho
-            </Button>
+          <div>
             <Button onClick={handleSubmit} disabled={updateRdoMutation.isPending}>
               {updateRdoMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>

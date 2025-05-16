@@ -290,10 +290,7 @@ export default function NewRdoPage() {
           <Button variant="outline" onClick={cancelForm}>
             Cancelar
           </Button>
-          <div className="space-x-2">
-            <Button variant="outline" className="border-primary text-primary" onClick={handleSaveDraft}>
-              Salvar Rascunho
-            </Button>
+          <div>
             <Button onClick={handleSubmit} disabled={createRdoMutation.isPending}>
               {createRdoMutation.isPending ? "Enviando..." : "Finalizar e Enviar"}
             </Button>
