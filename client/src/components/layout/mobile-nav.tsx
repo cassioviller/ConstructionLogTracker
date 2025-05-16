@@ -38,16 +38,7 @@ export default function MobileNav() {
           <span className="text-xs mt-1">Projetos</span>
         </button>
         
-        <button
-          onClick={() => navigate("/reports")}
-          className={cn(
-            "flex flex-col items-center justify-center",
-            isActivePath("/report") ? "text-primary" : "text-slate-500"
-          )}
-        >
-          <FileBarChart className="h-6 w-6" />
-          <span className="text-xs mt-1">Relatórios</span>
-        </button>
+
         
         <button
           onClick={() => navigate("/photos")}

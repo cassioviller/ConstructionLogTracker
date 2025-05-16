@@ -195,21 +195,21 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
     <Card>
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium leading-6 text-slate-900">Colaboradores</h3>
+          <h3 className="text-lg font-medium leading-6 text-slate-900">Equipe</h3>
           <div className="flex space-x-2">
             {/* Botão para adicionar membros da equipe do projeto */}
             <Dialog open={isTeamDialogOpen} onOpenChange={handleTeamDialogOpenChange}>
               <DialogTrigger asChild>
                 <Button size="sm" className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  Adicionar Colaboradores
+                  Adicionar Equipe
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Adicionar Colaboradores</DialogTitle>
+                  <DialogTitle>Adicionar Equipe</DialogTitle>
                   <DialogDescription>
-                    Selecione os colaboradores do projeto que deseja adicionar neste relatório.
+                    Selecione os membros da equipe do projeto que deseja adicionar neste relatório.
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -277,7 +277,7 @@ export function WorkforceSection({ onChange, initialData = [], projectId }: Work
               <DialogTrigger asChild>
                 <Button size="sm" className="flex items-center gap-1">
                   <PlusIcon className="h-4 w-4" />
-                  + Adicionar Colaborador
+                  Adicionar
                 </Button>
               </DialogTrigger>
               <DialogContent>

@@ -96,20 +96,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </a>
           </Link>
           
-          <Link href="/reports">
-            <a
-              className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors",
-                isActivePath("/report")
-                  ? "bg-primary text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FileBarChart className="h-5 w-5" />
-              <span>Relatórios</span>
-            </a>
-          </Link>
+
           
           <Link href="/photos">
             <a

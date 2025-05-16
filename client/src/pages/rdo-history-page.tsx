@@ -373,7 +373,44 @@ export default function RdoHistoryPage() {
                               </svg>
                               Excluir
                             </Button>
-                            <Button variant="outline" size="sm" className="h-8">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8"
+                              onClick={async () => {
+                                try {
+                                  // Buscar o PDF do relatório
+                                  const response = await fetch(`/api/rdos/${rdo.id}/pdf`);
+                                  if (!response.ok) {
+                                    throw new Error('Falha ao gerar PDF');
+                                  }
+                                  
+                                  // Receber o blob
+                                  const blob = await response.blob();
+                                  
+                                  // Criar URL para download
+                                  const url = window.URL.createObjectURL(blob);
+                                  
+                                  // Criar elemento <a> temporário para download
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `RDO-${rdo.number}.pdf`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  
+                                  // Limpar
+                                  window.URL.revokeObjectURL(url);
+                                  document.body.removeChild(a);
+                                } catch (error) {
+                                  console.error('Erro ao gerar PDF:', error);
+                                  toast({
+                                    title: "Erro ao gerar PDF",
+                                    description: "Não foi possível gerar o PDF",
+                                    variant: "destructive"
+                                  });
+                                }
+                              }}
+                            >
                               <Download className="h-4 w-4 mr-1" />
                               PDF
                             </Button>
