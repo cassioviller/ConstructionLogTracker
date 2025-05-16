@@ -44,14 +44,14 @@ RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
 
 # Variáveis de ambiente para produção
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5001
 
 # Porta que a aplicação irá escutar
-EXPOSE 5000
+EXPOSE 5001
 
 # Healthcheck para verificar se a aplicação está funcionando
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:5000/health || exit 1
+  CMD wget -qO- http://localhost:5001/health || exit 1
 
 # Iniciar a aplicação
 CMD ["node", "dist/index.js"]
