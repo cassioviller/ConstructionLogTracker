@@ -14,7 +14,6 @@ import EditRdoPage from "@/pages/edit-rdo-page";
 import RdoHistoryPage from "@/pages/rdo-history-page";
 import RdoDetailPage from "@/pages/rdo-detail-page";
 import PhotosPage from "@/pages/photos-page";
-import ReportsPage from "@/pages/reports-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 
@@ -28,7 +27,6 @@ function Router() {
       <ProtectedRoute path="/project/:id/rdo-history" component={RdoHistoryPage} />
       <ProtectedRoute path="/project/:id/rdo/:rdoId/edit" component={EditRdoPage} />
       <ProtectedRoute path="/project/:id/rdo/:rdoId" component={RdoDetailPage} />
-      <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/photos" component={PhotosPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

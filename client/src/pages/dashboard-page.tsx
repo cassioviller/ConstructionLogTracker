@@ -170,9 +170,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-semibold">Últimos Relatórios</CardTitle>
-              <Link href="/reports">
+              <Link href="/projects">
                 <Button variant="link" className="text-primary hover:text-blue-700 text-sm font-medium">
-                  Ver todos
+                  Ver projetos
                 </Button>
               </Link>
             </CardHeader>
