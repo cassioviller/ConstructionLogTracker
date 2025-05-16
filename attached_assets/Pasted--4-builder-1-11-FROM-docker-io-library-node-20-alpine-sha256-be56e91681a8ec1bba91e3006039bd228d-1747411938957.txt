@@ -1,0 +1,101 @@
+
+#4 [builder  1/11] FROM docker.io/library/node:20-alpine@sha256:be56e91681a8ec1bba91e3006039bd228dc797fd984794a3efedab325b36e679
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.56MB 0.1s done
+#5 DONE 0.1s
+
+#6 [builder  6/11] COPY vite.config.ts ./
+#6 CACHED
+
+#7 [builder  2/11] WORKDIR /app
+#7 CACHED
+
+#8 [builder  3/11] RUN apk add --no-cache python3 make g++ libc6-compat bash
+#8 CACHED
+
+#9 [builder  7/11] COPY drizzle.config.ts ./
+#9 CACHED
+
+#10 [builder  4/11] COPY package*.json ./
+#10 CACHED
+
+#11 [builder  5/11] COPY tsconfig.json ./
+#11 CACHED
+
+#12 [builder  8/11] RUN npm ci
+#12 CACHED
+
+#13 [builder  9/11] COPY . .
+#13 DONE 0.1s
+
+#14 [builder 10/11] RUN NODE_ENV=production npm run build
+#14 0.556 
+#14 0.556 > rest-express@1.0.0 build
+#14 0.556 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+#14 0.556 
+#14 0.881 vite v5.4.14 building for production...
+#14 0.965 transforming...
+#14 1.566 Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+#14 1.566   npx update-browserslist-db@latest
+#14 1.566   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+#14 12.16 ✓ 2708 modules transformed.
+#14 12.76 rendering chunks...
+#14 12.78 computing gzip size...
+#14 12.80 ../dist/public/index.html                   0.63 kB │ gzip:   0.38 kB
+#14 12.80 ../dist/public/assets/index-BBfn6CVp.css   73.23 kB │ gzip:  12.68 kB
+#14 12.80 
+#14 12.80 (!) Some chunks are larger than 500 kB after minification. Consider:
+#14 12.80 - Using dynamic import() to code-split the application
+#14 12.80 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#14 12.80 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#14 12.80 ../dist/public/assets/index-BGtqMmy-.js   692.57 kB │ gzip: 199.77 kB
+#14 12.80 ✓ built in 11.88s
+#14 12.91 
+#14 12.91   dist/index.js  77.9kb
+#14 12.91 
+#14 12.91 ⚡ Done in 15ms
+#14 DONE 13.0s
+
+#15 [builder 11/11] RUN ls -la dist && ls -la dist/public || echo "Pasta dist/public não existe"
+#15 0.121 total 92
+#15 0.121 drwxr-xr-x    3 root     root          4096 May 16 16:07 .
+#15 0.121 drwxr-xr-x    1 root     root          4096 May 16 16:07 ..
+#15 0.121 -rw-r--r--    1 root     root         79730 May 16 16:07 index.js
+#15 0.121 drwxr-xr-x    3 root     root          4096 May 16 16:07 public
+#15 0.123 total 16
+#15 0.123 drwxr-xr-x    3 root     root          4096 May 16 16:07 .
+#15 0.123 drwxr-xr-x    3 root     root          4096 May 16 16:07 ..
+#15 0.123 drwxr-xr-x    2 root     root          4096 May 16 16:07 assets
+#15 0.123 -rw-r--r--    1 root     root           625 May 16 16:07 index.html
+#15 DONE 0.1s
+
+#16 [production 4/7] RUN npm ci --omit=dev --no-optional
+#16 CACHED
+
+#17 [production 3/7] COPY package*.json ./
+#17 CACHED
+
+#18 [production 5/7] RUN npm install --save vite
+#18 CACHED
+
+#19 [production 6/7] COPY --from=builder /app/dist ./dist
+#19 DONE 0.0s
+
+#20 [production 7/7] RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
+#20 DONE 0.1s
+
+#21 exporting to image
+#21 exporting layers 0.0s done
+#21 writing image sha256:026f54a8639391726db9d59afc5f0836dfee01d149d11d4015866eb8c3cc59d4 done
+#21 naming to docker.io/easypanel/estruturas/diariodeobra done
+#21 DONE 0.0s
+
+ 2 warnings found (use docker --debug to expand):
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 1)
+ - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 28)
+##########################################
+### Success
+### Fri, 16 May 2025 16:07:39 GMT
+##########################################
