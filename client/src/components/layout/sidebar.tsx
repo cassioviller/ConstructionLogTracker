@@ -66,52 +66,55 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             Menu Principal
           </p>
           
-          <Link href="/">
-            <a
-              className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors",
-                isActivePath("/")
-                  ? "bg-primary text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Home className="h-5 w-5" />
-              <span>Dashboard</span>
-            </a>
-          </Link>
+          <div onClick={() => setSidebarOpen(false)}>
+            <Link href="/">
+              <div
+                className={cn(
+                  "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors cursor-pointer",
+                  isActivePath("/")
+                    ? "bg-primary text-white"
+                    : "text-slate-500 hover:bg-slate-100"
+                )}
+              >
+                <Home className="h-5 w-5" />
+                <span>Dashboard</span>
+              </div>
+            </Link>
+          </div>
           
-          <Link href="/projects">
-            <a
-              className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors",
-                isActivePath("/project")
-                  ? "bg-primary text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Building2 className="h-5 w-5" />
-              <span>Projetos</span>
-            </a>
-          </Link>
+          <div onClick={() => setSidebarOpen(false)}>
+            <Link href="/projects">
+              <div
+                className={cn(
+                  "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors cursor-pointer",
+                  isActivePath("/project")
+                    ? "bg-primary text-white"
+                    : "text-slate-500 hover:bg-slate-100"
+                )}
+              >
+                <Building2 className="h-5 w-5" />
+                <span>Projetos</span>
+              </div>
+            </Link>
+          </div>
           
 
           
-          <Link href="/photos">
-            <a
-              className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors",
-                isActivePath("/photos")
-                  ? "bg-primary text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <ImageIcon className="h-5 w-5" />
-              <span>Galeria</span>
-            </a>
-          </Link>
+          <div onClick={() => setSidebarOpen(false)}>
+            <Link href="/photos">
+              <div
+                className={cn(
+                  "flex items-center space-x-2 px-3 py-2 rounded-md my-1 transition-colors cursor-pointer",
+                  isActivePath("/photos")
+                    ? "bg-primary text-white"
+                    : "text-slate-500 hover:bg-slate-100"
+                )}
+              >
+                <ImageIcon className="h-5 w-5" />
+                <span>Galeria</span>
+              </div>
+            </Link>
+          </div>
 
           {projects && projects.length > 0 && (
             <>
@@ -120,37 +123,37 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </p>
               
               {projects.slice(0, 5).map((project) => (
-                <Link href={`/project/${project.id}`} key={project.id}>
-                  <a
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md my-1 text-slate-500 hover:bg-slate-100 transition-colors"
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <span className={cn(
-                      "h-2 w-2 rounded-full",
-                      project.status === "inProgress" 
-                        ? "bg-green-500" 
-                        : project.status === "planning" 
-                        ? "bg-blue-500" 
-                        : project.status === "onHold" 
-                        ? "bg-amber-500" 
-                        : project.status === "completed" 
-                        ? "bg-slate-500" 
-                        : "bg-blue-500"
-                    )}></span>
-                    <span className="truncate">{project.name}</span>
-                  </a>
-                </Link>
+                <div key={project.id} onClick={() => setSidebarOpen(false)}>
+                  <Link href={`/project/${project.id}`} key={project.id}>
+                    <div
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md my-1 text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      <span className={cn(
+                        "h-2 w-2 rounded-full",
+                        project.status === "inProgress" 
+                          ? "bg-green-500" 
+                          : project.status === "planning" 
+                          ? "bg-blue-500" 
+                          : project.status === "onHold" 
+                          ? "bg-amber-500" 
+                          : project.status === "completed" 
+                          ? "bg-slate-500" 
+                          : "bg-blue-500"
+                      )}></span>
+                      <span className="truncate">{project.name}</span>
+                    </div>
+                  </Link>
+                </div>
               ))}
               
               {projects.length > 5 && (
-                <Link href="/projects">
-                  <a
-                    className="flex justify-center text-xs text-primary hover:text-blue-700 px-3 py-2"
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    Ver todos ({projects.length})
-                  </a>
-                </Link>
+                <div onClick={() => setSidebarOpen(false)}>
+                  <Link href="/projects">
+                    <div className="flex justify-center text-xs text-primary hover:text-blue-700 px-3 py-2 cursor-pointer">
+                      Ver todos ({projects.length})
+                    </div>
+                  </Link>
+                </div>
               )}
             </>
           )}

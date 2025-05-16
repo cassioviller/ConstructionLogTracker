@@ -326,9 +326,9 @@ export default function ProjectDetailPage() {
               <h3 className="text-sm font-medium text-slate-500 mb-1">Responsável Técnico</h3>
               <div className="flex items-center">
                 <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs mr-2">
-                  {project.responsible?.name?.charAt(0) || "U"}
+                  {(project.responsible?.charAt?.(0) || project.responsible?.name?.charAt?.(0) || "U")}
                 </div>
-                <span className="text-slate-800">{project.responsible?.name || "Não atribuído"}</span>
+                <span className="text-slate-800">{project.responsible?.name || project.responsible || "Não atribuído"}</span>
               </div>
             </div>
             <div>
