@@ -12,6 +12,12 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
       - SESSION_SECRET=${SESSION_SECRET:-supersecretkey123}
+      - PGUSER=obras
+      - PGPASSWORD=obras
+      - PGDATABASE=obras
+      - PGHOST=estruturas_diariodeobras
+      - PGPORT=5432
+      - PORT=5002
       - TZ=America/Sao_Paulo
     depends_on:
       - db
@@ -25,7 +31,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 45s
 
   db:
     image: postgres:16-alpine
