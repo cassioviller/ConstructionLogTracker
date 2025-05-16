@@ -6,42 +6,57 @@ WORKDIR /app
 # Instalar dependências básicas
 RUN apk add --no-cache python3 make g++ libc6-compat bash
 
-# Copiar todo o código fonte incluindo arquivos de configuração
+# Copiar apenas os arquivos necessários para instalar dependências
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+COPY drizzle.config.ts ./
+
+# Instalar TODAS as dependências, incluindo as de desenvolvimento
+RUN npm ci
+
+# Copiar todo o código fonte após instalação das dependências
 COPY . .
 
-# Tornar o script de build executável
-RUN chmod +x easypanel-build.sh
+# Criar diretório para build
+RUN mkdir -p /app/dist
 
-# Executar o script de build personalizado
-RUN ./easypanel-build.sh
+# Build da aplicação frontend e backend
+RUN NODE_ENV=production npm run build
+
+# Garantir que o código de produção não importará o Vite
+RUN grep -l "vite" dist/*.js || echo "Nenhuma referência ao vite encontrada nos arquivos de produção (sucesso)"
 
 # Estágio 2: imagem de produção
 FROM node:20-alpine as production
 
 WORKDIR /app
 
-# Copiar package.json e install apenas dependências de produção
+# Copiar package.json e instalar apenas dependências de produção
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --no-optional
+
+# Também instalar o vite explicitamente na imagem de produção para garantir
+# que não ocorra o erro de módulo não encontrado
+RUN npm install --save vite
 
 # Copiar arquivos construídos do estágio anterior
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/client/dist ./client/dist
 
-# Cria diretório para uploads
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+# Criar diretórios necessários
+RUN mkdir -p /app/uploads /app/backups && chmod 777 /app/uploads /app/backups
 
 # Variáveis de ambiente para produção
 ENV NODE_ENV=production
 ENV PORT=5000
-ENV DATABASE_URL=postgres://obras:obras@estruturas_diariodeobras:5432/obras?sslmode=disable
-ENV SESSION_SECRET=diario-de-obra-session-secret-production
 
 # Porta que a aplicação irá escutar
 EXPOSE 5000
 
 # Healthcheck para verificar se a aplicação está funcionando
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:5000/health || exit 1
+  CMD wget -qO- http://localhost:5000/api/health || exit 1
 
 # Iniciar a aplicação
 CMD ["node", "dist/index.js"]
